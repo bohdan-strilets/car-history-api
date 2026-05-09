@@ -5,3 +5,946 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// User 
+model User {
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  emailVerified           Boolean                  @default(false)
+  emailVerifiedAt         DateTime?
+  firstName               String
+  lastName                String
+  avatarUrl               String?
+  status                  UserStatus               @default(ACTIVE)
+  lastLoginAt             DateTime?
+  loginCount              Int                      @default(0)
+  deletedAt               DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  userSettings            UserSettings?
+  authCredentials         AuthCredentials?
+  sessions                Session[]
+  emailVerificationTokens EmailVerificationToken[]
+  emailChangeTokens       EmailChangeToken[]
+  passwordResetTokens     PasswordResetToken[]
+  workspaces              Workspace[]
+  workspaceMembers        WorkspaceMember[]
+  workspaceInvites        WorkspaceInvite[]
+  vehicles                Vehicle[]
+  vehicleMilestones       VehicleMilestone[]
+  serviceStations         ServiceStation[]
+  medias                  Media[]
+  aiConversations         AiConversation[]
+
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// User Settings
+model UserSettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  language           Language @default(PL)
+  theme              Theme    @default(SYSTEM)
+  notificationsEmail Boolean  @default(true)
+  notificationsPush  Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+enum Language {
+  PL
+  UK
+  EN
+}
+
+enum Theme {
+  DARK
+  LIGHT
+  SYSTEM
+}
+
+// User Authentication
+model AuthCredentials {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  passwordHash          String?
+  passwordChangedAt     DateTime?
+  passwordResetRequired Boolean   @default(false)
+  failedLoginAttempts   Int       @default(0)
+  lockedUntil           DateTime?
+  lastFailedLoginAt     DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_credentials")
+}
+
+// User Tokens
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model EmailChangeToken {
+  id        String    @id @default(cuid())
+  userId    String
+  newEmail  String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_change_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+// Session
+model Session {
+  id               String        @id @default(cuid())
+  userId           String
+  tokenFamily      String
+  refreshTokenHash String
+  status           SessionStatus @default(ACTIVE)
+  deviceName       String?
+  userAgent        String?
+  ipAddress        String?
+  lastActivityAt   DateTime?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+enum SessionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
+// Workspace
+model Workspace {
+  id        String             @id @default(cuid())
+  ownerId   String
+  name      String
+  type      WorkspaceType      @default(PERSONAL)
+  deletedAt DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  owner     User               @relation(fields: [ownerId], references: [id])
+  members   WorkspaceMember[]
+  invites   WorkspaceInvite[]
+  settings  WorkspaceSettings?
+  vehicles  Vehicle[]
+
+  @@map("workspaces")
+}
+
+enum WorkspaceType {
+  PERSONAL
+  FAMILY
+  BUSINESS
+}
+
+// Workspace Settings
+model WorkspaceSettings {
+  id           String       @id @default(cuid())
+  workspaceId  String       @unique
+  currency     Currency     @default(PLN)
+  timezone     String       @default("Europe/Warsaw")
+  distanceUnit DistanceUnit @default(KM)
+  fuelUnit     FuelUnit     @default(L)
+  dateFormat   DateFormat   @default(DD_MM_YYYY)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_settings")
+}
+
+enum Currency {
+  PLN
+  UAH
+  USD
+  EUR
+}
+
+enum DistanceUnit {
+  KM
+  MI
+}
+
+enum FuelUnit {
+  L
+  GAL
+}
+
+enum DateFormat {
+  DD_MM_YYYY
+  YYYY_MM_DD
+  DD_MONTH_YYYY
+}
+
+// Workspace Member
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        Role     @default(MEMBER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// Workspace Invite
+model WorkspaceInvite {
+  id          String       @id @default(cuid())
+  invitedById String
+  workspaceId String
+  token       String       @unique
+  role        Role         @default(MEMBER)
+  email       String
+  status      InviteStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation(fields: [invitedById], references: [id])
+
+  @@map("workspace_invites")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+// Vehicle
+model Vehicle {
+  id                   String        @id @default(cuid())
+  ownerId              String
+  workspaceId          String
+  brand                String
+  model                String
+  year                 Int
+  generation           String?
+  nickname             String?
+  vin                  String?
+  plateNumber          String
+  engineDisplacementCc Int
+  bodyType             BodyType
+  fuelType             FuelType
+  transmission         Transmission
+  driveType            DriveType
+  color                String
+  purchaseInfo         Json?
+  saleInfo             Json?
+  specs                Json?
+  currentMileage       Int           @default(0)
+  description          String?
+  primaryPhotoId       String?
+  countryOfOrigin      String?
+  status               VehicleStatus @default(ACTIVE)
+  deletedAt            DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  owner                User                  @relation(fields: [ownerId], references: [id])
+  workspace            Workspace             @relation(fields: [workspaceId], references: [id])
+  maintenanceIntervals MaintenanceInterval[]
+  tires                Tire[]
+  mileageLogs          MileageLog[]
+  reminders            Reminder[]
+  vehicleMilestones    VehicleMilestone[]
+  timelineEvents       TimelineEvent[]
+  aiConversations      AiConversation[]
+
+  @@map("vehicles")
+}
+
+enum BodyType {
+  SEDAN
+  HATCHBACK
+  WAGON
+  SUV
+  CROSSOVER
+  COUPE
+  CONVERTIBLE
+  MINIVAN
+  PICKUP
+  VAN
+  OTHER
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+  LPG
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  ROBOTIC
+}
+
+enum DriveType {
+  FWD
+  RWD
+  AWD
+}
+
+enum VehicleStatus {
+  ACTIVE
+  ARCHIVE
+  DELETED
+}
+
+// Maintenance Interval
+model MaintenanceInterval {
+  id                 String            @id @default(cuid())
+  vehicleId          String
+  type               MaintenanceType
+  title              String
+  intervalKm         Int?
+  intervalMonths     Int?
+  lastServiceMileage Int?
+  lastServiceDate    DateTime?
+  nextServiceMileage Int?
+  nextServiceDate    DateTime?
+  status             MaintenanceStatus @default(ACTIVE)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("maintenance_intervals")
+}
+
+enum MaintenanceType {
+  OIL_CHANGE
+  BRAKE_PADS
+  BRAKE_DISCS
+  TIMING_BELT
+  AIR_FILTER
+  FUEL_FILTER
+  CABIN_FILTER
+  SPARK_PLUGS
+  COOLANT
+  TRANSMISSION_OIL
+  CUSTOM
+}
+
+enum MaintenanceStatus {
+  ACTIVE
+  DISABLED
+}
+
+// Tire
+model Tire {
+  id                String     @id @default(cuid())
+  vehicleId         String
+  brand             String
+  model             String
+  type              TireType
+  width             Int
+  aspectRatio       Int
+  rimDiameter       Int
+  price             Decimal?
+  status            TireStatus @default(STORED)
+  storageLocation   String?
+  mileageAtPurchase Int?
+  quantity          Int        @default(4)
+  purchaseAt        DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  vehicle     Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  tireChanges TireChange[]
+
+  @@map("tires")
+}
+
+enum TireType {
+  ALL_SEASON
+  SUMMER
+  WINTER
+}
+
+enum TireStatus {
+  MOUNTED
+  STORED
+  RETIRED
+}
+
+// Mileage Log
+model MileageLog {
+  id        String        @id @default(cuid())
+  vehicleId String
+  eventId   String?
+  mileage   Int
+  source    MileageSource
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("mileage_logs")
+}
+
+enum MileageSource {
+  PURCHASE
+  SALE
+  REFUEL
+  CHARGE
+  SERVICE
+  DOCUMENT
+  EXPENSE
+  TIRE_CHANGE
+  TRIP
+  MANUAL
+}
+
+// Reminder & Notification
+model Reminder {
+  id                    String         @id @default(cuid())
+  vehicleId             String
+  maintenanceIntervalId String?
+  documentId            String?
+  type                  ReminderType
+  title                 String
+  description           String?
+  dueDate               DateTime?
+  dueMileage            Int?
+  status                ReminderStatus @default(ACTIVE)
+  completedAt           DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  vehicle       Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@map("reminders")
+}
+
+enum ReminderType {
+  INSURANCE
+  TECHNICAL_INSPECTION
+  OIL_CHANGE
+  FILTER_CHANGE
+  TIRE_CHANGE
+  CUSTOM
+}
+
+enum ReminderStatus {
+  ACTIVE
+  COMPLETED
+  DISMISSED
+}
+
+model Notification {
+  id         String              @id @default(cuid())
+  reminderId String
+  channel    NotificationChannel
+  status     NotificationStatus  @default(PENDING)
+  sentAt     DateTime?
+  readAt     DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+// Milestones
+model MilestoneDefinition {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  category    String
+  title       String
+  description String
+  condition   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  milestones VehicleMilestone[]
+
+  @@map("milestone_definitions")
+}
+
+model VehicleMilestone {
+  id                    String   @id @default(cuid())
+  userId                String
+  vehicleId             String
+  milestoneDefinitionId String
+  value                 Float
+  isSeen                Boolean  @default(false)
+  achievedAt            DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                User                @relation(fields: [userId], references: [id])
+  vehicle             Vehicle             @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  milestoneDefinition MilestoneDefinition @relation(fields: [milestoneDefinitionId], references: [id])
+
+  @@map("vehicle_milestones")
+}
+
+// Timeline Events
+model TimelineEvent {
+  id               String       @id @default(cuid())
+  vehicleId        String
+  serviceStationId String?
+  type             TimelineType
+  title            String
+  description      String?
+  eventDate        DateTime
+  mileage          Int
+  cost             Decimal?
+  deletedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  vehicle        Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  serviceStation ServiceStation? @relation(fields: [serviceStationId], references: [id])
+
+  refuel     Refuel?
+  charge     Charge?
+  service    Service?
+  document   Document?
+  expense    Expense?
+  tireChange TireChange?
+  trip       Trip?
+  purchase   Purchase?
+  sale       Sale?
+
+  @@map("timeline_events")
+}
+
+enum TimelineType {
+  PURCHASE
+  SALE
+  REFUEL
+  CHARGE
+  SERVICE
+  DOCUMENT
+  EXPENSE
+  TIRE_CHANGE
+  TRIP
+}
+
+// Events
+model Refuel {
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  liters        Decimal
+  pricePerLiter Decimal
+  fuelType      FuelType
+  isFullTank    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("refuels")
+}
+
+model Charge {
+  id             String     @id @default(cuid())
+  eventId        String     @unique
+  kWh            Decimal
+  pricePerKWh    Decimal
+  chargeType     ChargeType
+  chargerNetwork String?
+  batteryBefore  Int?
+  batteryAfter   Int?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("charges")
+}
+
+enum ChargeType {
+  AC
+  DC
+}
+
+model Service {
+  id        String          @id @default(cuid())
+  eventId   String          @unique
+  category  ServiceCategory
+  parts     Json?
+  works     Json?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("services")
+}
+
+enum ServiceCategory {
+  MAINTENANCE
+  REPAIR
+  OTHER
+}
+
+model Document {
+  id             String       @id @default(cuid())
+  eventId        String       @unique
+  type           DocumentType
+  documentNumber String?
+  issuedBy       String?
+  issueDate      DateTime?
+  expireDate     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+enum DocumentType {
+  INSURANCE_OC
+  INSURANCE_AC
+  TECHNICAL_INSPECTION
+  LOAN
+  LEASING
+  VIGNETTE
+  OTHER
+}
+
+model Expense {
+  id        String          @id @default(cuid())
+  eventId   String          @unique
+  category  ExpenseCategory
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("expenses")
+}
+
+enum ExpenseCategory {
+  ACCESSORIES
+  CARE
+  PARKING
+  FINE
+  REGISTRATION
+  RENTAL
+  OTHER
+}
+
+model TireChange {
+  id               String    @id @default(cuid())
+  eventId          String    @unique
+  tireId           String
+  installedMileage Int?
+  removedMileage   Int?
+  removedDate      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tire  Tire          @relation(fields: [tireId], references: [id])
+
+  @@map("tire_changes")
+}
+
+model Trip {
+  id            String      @id @default(cuid())
+  eventId       String      @unique
+  startMileage  Int
+  endMileage    Int
+  startLocation String?
+  endLocation   String?
+  distanceKm    Decimal
+  purpose       TripPurpose @default(PERSONAL)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("trips")
+}
+
+enum TripPurpose {
+  PERSONAL
+  WORK
+  OTHER
+}
+
+model Purchase {
+  id            String       @id @default(cuid())
+  eventId       String       @unique
+  purchasedFrom PurchaseFrom
+  country       String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("purchases")
+}
+
+enum PurchaseFrom {
+  SALON
+  PRIVATE
+  AUCTION
+  ABROAD
+}
+
+model Sale {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  soldTo    SoldTo
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@map("sales")
+}
+
+enum SoldTo {
+  SALON
+  PRIVATE
+  AUCTION
+  ABROAD
+}
+
+// Service Station
+model ServiceStation {
+  id            String             @id @default(cuid())
+  userId        String
+  name          String
+  type          ServiceStationType
+  address       Json
+  latitude      Decimal?
+  longitude     Decimal?
+  phone         String?
+  website       String?
+  notes         String?
+  isFavorite    Boolean            @default(false)
+  lastVisitedAt DateTime?
+  visitCount    Int                @default(0)
+  myRating      Int?
+  photoUrl      String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timelineEvents TimelineEvent[]
+
+  @@map("service_stations")
+}
+
+enum ServiceStationType {
+  MECHANIC
+  TIRE_SHOP
+  CAR_WASH
+  FUEL_STATION
+  DEALERSHIP
+  OTHER
+}
+
+// Media & Files
+model Media {
+  id              String    @id @default(cuid())
+  uploadedBy      String
+  cloudinaryId    String
+  cloudinaryUrl   String
+  type            MediaType
+  mimeType        String
+  originalName    String
+  storageKey      String
+  sizeBytes       Int
+  width           Int?
+  height          Int?
+  durationSeconds Int?
+  isPublic        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user     User           @relation(fields: [uploadedBy], references: [id])
+  variants MediaVariant[]
+  usages   MediaUsage[]
+
+  @@map("media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model MediaVariant {
+  id            String      @id @default(cuid())
+  mediaId       String
+  type          VariantType
+  cloudinaryUrl String
+  storageKey    String
+  width         Int?
+  height        Int?
+  sizeBytes     Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@map("media_variants")
+}
+
+enum VariantType {
+  ORIGINAL
+  LARGE
+  MEDIUM
+  SMALL
+  THUMBNAIL
+}
+
+model MediaUsage {
+  id         String        @id @default(cuid())
+  mediaId    String
+  entityType MediaEntity
+  entityId   String
+  category   MediaCategory
+  isPrimary  Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@map("media_usages")
+}
+
+enum MediaEntity {
+  VEHICLE
+  SERVICE
+  DOCUMENT
+  EXPENSE
+  TRIP
+  TIRE
+  USER
+}
+
+enum MediaCategory {
+  AVATAR
+  EXTERIOR
+  INTERIOR
+  ENGINE
+  DAMAGE
+  RECEIPT
+  DOCUMENT
+  OTHER
+}
+
+// AI Conversations
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  vehicleId String?
+  title     String
+  context   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle?    @relation(fields: [vehicleId], references: [id])
+  messages AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  tokensUsed     Int?
+  isError        Boolean     @default(false)
+  metadata       Json?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
