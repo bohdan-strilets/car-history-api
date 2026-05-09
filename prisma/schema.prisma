@@ -293,6 +293,7 @@ model Vehicle {
   saleInfo             Json?
   specs                Json?
   currentMileage       Int           @default(0)
+  registrationMileage  Int           @default(0)
   description          String?
   primaryPhotoId       String?
   countryOfOrigin      String?
