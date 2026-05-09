@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { Env } from './env.schema';
 
 @Injectable()
@@ -14,8 +15,16 @@ export class AppConfigService {
     return this.config.get('PORT', { infer: true });
   }
 
+  get prefix() {
+    return this.config.get('PREFIX', { infer: true });
+  }
+
   get databaseUrl() {
     return this.config.get('DATABASE_URL', { infer: true });
+  }
+
+  get frontendUrl() {
+    return this.config.get('FRONTEND_URL', { infer: true });
   }
 
   get isDevelopment() {
