@@ -42,4 +42,20 @@ export class AppConfigService {
   get tokenBytes() {
     return this.config.get('TOKEN_BYTES', { infer: true });
   }
+
+  get jwtAccessSecret() {
+    return this.config.get('JWT_ACCESS_SECRET', { infer: true });
+  }
+
+  get jwtRefreshSecret() {
+    return this.config.get('JWT_REFRESH_SECRET', { infer: true });
+  }
+
+  get jwtAccessExpiresIn() {
+    return this.config.get('JWT_ACCESS_EXPIRES_IN', { infer: true });
+  }
+
+  get jwtRefreshExpiresIn() {
+    return this.config.get('JWT_REFRESH_EXPIRES_IN', { infer: true });
+  }
 }
