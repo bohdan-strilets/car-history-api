@@ -1,4 +1,6 @@
-import { Logger } from '@nestjs/common';
+import { HttpExceptionFilter } from '@common/exceptions';
+import { TransformInterceptor } from '@common/interceptors';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 
@@ -21,6 +23,16 @@ async function bootstrap() {
     origin: frontendUrl,
     credentials: true,
   });
+
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   await app.listen(port);
   logger.log(`🚀 Arvino API running on http://localhost:${port}/${prefix}`);
