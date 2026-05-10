@@ -34,4 +34,12 @@ export class AppConfigService {
   get isProduction() {
     return this.nodeEnv === 'production';
   }
+
+  get bcryptRounds() {
+    return this.config.get('BCRYPT_ROUNDS', { infer: true });
+  }
+
+  get tokenBytes() {
+    return this.config.get('TOKEN_BYTES', { infer: true });
+  }
 }
