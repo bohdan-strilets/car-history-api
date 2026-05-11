@@ -1,2 +1,5 @@
 export { CreateGoogleUserDto } from './create-google-user.dto';
 export { CreateUserDto } from './create-user.dto';
+export { UserProfileResponseDto } from './user-profile-response.dto';
+export { UserResponseDto } from './user-response.dto';
+export { UserSettingsResponseDto } from './user-settings-response.dto';
