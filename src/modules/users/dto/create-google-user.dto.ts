@@ -1,20 +1,11 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { UserConstraints } from '@common/validation';
+import { IsOptional, IsUrl, MaxLength } from 'class-validator';
 
-export class CreateGoogleUserDto {
-  @IsEmail()
-  declare email: string;
+import { BaseUserDto } from './base-user.dto';
 
-  @IsString()
-  @MinLength(2)
-  @MaxLength(50)
-  declare firstName: string;
-
-  @IsString()
-  @MinLength(2)
-  @MaxLength(50)
-  declare lastName: string;
-
+export class CreateGoogleUserDto extends BaseUserDto {
   @IsOptional()
-  @IsString()
+  @IsUrl()
+  @MaxLength(UserConstraints.AVATAR_URL_MAX)
   declare avatarUrl?: string;
 }

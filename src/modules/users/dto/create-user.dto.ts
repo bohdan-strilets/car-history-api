@@ -1,21 +1,11 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { UserConstraints } from '@common/validation';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
-export class CreateUserDto {
-  @IsEmail()
-  declare email: string;
+import { BaseUserDto } from './base-user.dto';
 
+export class CreateUserDto extends BaseUserDto {
   @IsString()
-  @MinLength(2)
-  @MaxLength(50)
-  declare firstName: string;
-
-  @IsString()
-  @MinLength(2)
-  @MaxLength(50)
-  declare lastName: string;
-
-  @IsString()
-  @MinLength(8)
-  @MaxLength(64)
+  @MinLength(UserConstraints.PASSWORD_MIN)
+  @MaxLength(UserConstraints.PASSWORD_MAX)
   declare password: string;
 }
