@@ -3,8 +3,9 @@ import { TokensModule } from '@modules/tokens';
 import { Module } from '@nestjs/common';
 
 import { AppConfigModule } from './config';
+import { PrismaModule } from './prisma';
 
 @Module({
-  imports: [AppConfigModule, CryptoModule, TokensModule],
+  imports: [AppConfigModule, PrismaModule, CryptoModule, TokensModule],
 })
 export class AppModule {}

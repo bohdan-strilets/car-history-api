@@ -58,4 +58,12 @@ export class AppConfigService {
   get jwtRefreshExpiresIn() {
     return this.config.get('JWT_REFRESH_EXPIRES_IN', { infer: true });
   }
+
+  get maxFailedAttempts() {
+    return this.config.get('MAX_FAILED_ATTEMPTS', { infer: true });
+  }
+
+  get lockDurationMinutes() {
+    return this.config.get('LOCK_DURATION_MINUTES', { infer: true });
+  }
 }

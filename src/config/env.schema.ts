@@ -16,6 +16,9 @@ export const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m') as z.ZodType<StringValue>,
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d') as z.ZodType<StringValue>,
+
+  MAX_FAILED_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
+  LOCK_DURATION_MINUTES: z.coerce.number().int().min(5).max(60).default(15),
 });
 
 export type Env = z.infer<typeof envSchema>;
