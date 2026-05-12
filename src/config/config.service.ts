@@ -66,4 +66,16 @@ export class AppConfigService {
   get lockDurationMinutes() {
     return this.config.get('LOCK_DURATION_MINUTES', { infer: true });
   }
+
+  get googleClientId() {
+    return this.config.get('GOOGLE_CLIENT_ID', { infer: true });
+  }
+
+  get googleClientSecret() {
+    return this.config.get('GOOGLE_CLIENT_SECRET', { infer: true });
+  }
+
+  get googleCallbackUrl() {
+    return this.config.get('GOOGLE_CALLBACK_URL', { infer: true });
+  }
 }

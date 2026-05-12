@@ -19,6 +19,10 @@ export const envSchema = z.object({
 
   MAX_FAILED_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
   LOCK_DURATION_MINUTES: z.coerce.number().int().min(5).max(60).default(15),
+
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  GOOGLE_CALLBACK_URL: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;
