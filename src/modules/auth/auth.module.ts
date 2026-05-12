@@ -2,6 +2,7 @@
 
 import { JwtAuthGuard } from '@common/guards';
 import { AppConfigModule } from '@config/config.module';
+import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions/sessions.module';
 import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
@@ -12,7 +13,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  imports: [PassportModule, UsersModule, SessionsModule, AppConfigModule],
+  imports: [PassportModule, UsersModule, SessionsModule, AppConfigModule, MailModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],
   exports: [JwtAuthGuard],

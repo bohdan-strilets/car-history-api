@@ -1,5 +1,6 @@
 import { CryptoModule } from '@common/crypto';
 import { AuthModule } from '@modules/auth';
+import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions';
 import { TokensModule } from '@modules/tokens';
 import { UsersModule } from '@modules/users';
@@ -17,6 +18,7 @@ import { PrismaModule } from './prisma';
     UsersModule,
     SessionsModule,
     AuthModule,
+    MailModule,
   ],
 })
 export class AppModule {}

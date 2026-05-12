@@ -78,4 +78,20 @@ export class AppConfigService {
   get googleCallbackUrl() {
     return this.config.get('GOOGLE_CALLBACK_URL', { infer: true });
   }
+
+  get resendApiKey() {
+    return this.config.get('RESEND_API_KEY', { infer: true });
+  }
+
+  get mailFrom() {
+    return this.config.get('MAIL_FROM', { infer: true });
+  }
+
+  get passwordResetExpiresInMinutes() {
+    return this.config.get('PASSWORD_RESET_EXPIRES_IN_MINUTES', { infer: true });
+  }
+
+  get emailVerifyExpiresInMinutes() {
+    return this.config.get('EMAIL_VERIFY_EXPIRES_IN_MINUTES', { infer: true });
+  }
 }

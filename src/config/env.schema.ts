@@ -23,6 +23,12 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_CALLBACK_URL: z.string(),
+
+  RESEND_API_KEY: z.string(),
+  MAIL_FROM: z.string().default('noreply@arvino.app'),
+
+  PASSWORD_RESET_EXPIRES_IN_MINUTES: z.coerce.number().int().default(60),
+  EMAIL_VERIFY_EXPIRES_IN_MINUTES: z.coerce.number().int().default(1440),
 });
 
 export type Env = z.infer<typeof envSchema>;

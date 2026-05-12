@@ -17,6 +17,7 @@
     "strictBindCallApply": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    "jsx": "react-jsx",
     "types": ["node"],
     "paths": {
       "@modules/*": ["./src/modules/*"],

@@ -1,5 +1,7 @@
 import { ErrorCodes, UnauthorizedException } from '@common/exceptions';
 import { parseDeviceName, parseIpAddress } from '@common/utils';
+import { AppConfigService } from '@config/config.service';
+import { MailService } from '@modules/mail';
 import { SessionsService } from '@modules/sessions/sessions.service';
 import { CreateGoogleUserDto, CreateUserDto } from '@modules/users';
 import { toUserResponse } from '@modules/users/mappers/user.mapper';
@@ -15,6 +17,8 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly sessionsService: SessionsService,
+    private readonly mailService: MailService,
+    private readonly config: AppConfigService,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -23,7 +27,12 @@ export class AuthService {
     const user = await this.usersService.createUser(dto);
 
     const rawToken = await this.usersService.createEmailVerificationToken(user.id, user.email);
-    // TODO: send email via MailService
+
+    await this.mailService.sendConfirmEmail({
+      to: user.email,
+      firstName: user.firstName,
+      confirmUrl: this.buildConfirmUrl(rawToken),
+    });
 
     const { accessToken, refreshToken } = await this.sessionsService.createSession({
       userId: user.id,
@@ -102,7 +111,12 @@ export class AuthService {
   async resendConfirmation(userId: string): Promise<void> {
     const user = await this.usersService.getById(userId);
     const rawToken = await this.usersService.createEmailVerificationToken(userId, user.email);
-    // TODO: send email via MailService
+
+    await this.mailService.sendConfirmEmail({
+      to: user.email,
+      firstName: user.firstName,
+      confirmUrl: this.buildConfirmUrl(rawToken),
+    });
   }
 
   // ─── Password Reset ───────────────────────────────────────────────────────
@@ -112,10 +126,26 @@ export class AuthService {
     if (!user) return;
 
     const rawToken = await this.usersService.createPasswordResetToken(user.id);
-    // TODO: send email via MailService
+
+    await this.mailService.sendResetPassword({
+      to: user.email,
+      firstName: user.firstName,
+      resetUrl: this.buildResetPasswordUrl(rawToken),
+      expiresInMinutes: this.config.passwordResetExpiresInMinutes,
+    });
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     await this.usersService.resetPassword(token, newPassword);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private buildConfirmUrl(token: string): string {
+    return `${this.config.frontendUrl}/auth/confirm-email?token=${token}`;
+  }
+
+  private buildResetPasswordUrl(token: string): string {
+    return `${this.config.frontendUrl}/auth/reset-password?token=${token}`;
   }
 }
