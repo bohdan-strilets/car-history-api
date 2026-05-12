@@ -1,55 +1,46 @@
-export type MailParams = {
+export interface MailParams {
   to: string;
   subject: string;
   html: string;
-};
+}
 
-export type ConfirmEmailParams = {
-  to: string;
+export interface BaseTemplateParams {
   firstName: string;
+  to: string;
+}
+
+export interface ConfirmEmailParams extends BaseTemplateParams {
   confirmUrl: string;
-};
+}
 
-export type WelcomeParams = {
-  to: string;
-  firstName: string;
+export interface WelcomeParams extends BaseTemplateParams {
   dashboardUrl: string;
-};
+}
 
-export type ResetPasswordParams = {
-  to: string;
-  firstName: string;
+export interface ResetPasswordParams extends BaseTemplateParams {
   resetUrl: string;
   expiresInMinutes: number;
-};
+}
 
-export type PasswordChangedParams = {
-  to: string;
-  firstName: string;
+export interface PasswordChangedParams extends BaseTemplateParams {
   resetUrl: string;
   changedAt: Date;
-};
+}
 
-export type AccountLockedParams = {
-  to: string;
-  firstName: string;
+export interface AccountLockedParams extends BaseTemplateParams {
   lockedUntil: Date;
   resetUrl: string;
-};
+}
 
-export type EmailChangedParams = {
-  to: string;
-  firstName: string;
+export interface EmailChangedParams extends BaseTemplateParams {
   newEmail: string;
   resetUrl: string;
   changedAt: Date;
-};
+}
 
-export type NewDeviceLoginParams = {
-  to: string;
-  firstName: string;
+export interface NewDeviceLoginParams extends BaseTemplateParams {
   deviceName: string;
   ipAddress: string;
   loginAt: Date;
   resetUrl: string;
-};
+}

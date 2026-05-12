@@ -1,10 +1,10 @@
 export const colors = {
-  canvas: '#141414',
-  surface: '#1A1A1A',
-  border: 'rgba(60, 60, 60, 0.6)',
-  textPrimary: '#F0F0F0',
-  textSecondary: '#8A8A8A',
-  textMuted: '#5A5A5A',
+  canvas: '#DDDEE6',
+  surface: '#E8E9EF',
+  border: 'rgba(185, 188, 205, 0.4)',
+  textPrimary: '#1C1F2E',
+  textSecondary: '#6B7080',
+  textMuted: '#9EA5B5',
   accent: '#F97316',
   white: '#FFFFFF',
 } as const;

@@ -19,10 +19,9 @@ export const BaseLayout = ({ preview, children }: BaseLayoutProps) => {
           {/* Logo */}
           <Section style={{ textAlign: 'center', marginBottom: spacing['3xl'] }}>
             <Img
-              src="https://arvino.app/logo.png"
+              src="https://res.cloudinary.com/ddd1vgg5b/image/upload/v1778594269/Arvino/dev/pqmzw8scnpysrmct8jgy.png"
               alt="Arvino"
               width={120}
-              height={40}
               style={{ margin: '0 auto' }}
             />
           </Section>
