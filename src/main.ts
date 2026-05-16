@@ -1,6 +1,7 @@
 import { HttpExceptionFilter } from '@common/exceptions';
 import { TransformInterceptor } from '@common/interceptors';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { createValidationPipe } from '@common/pipes';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -27,13 +28,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(createValidationPipe());
 
   app.use(cookieParser());
 
