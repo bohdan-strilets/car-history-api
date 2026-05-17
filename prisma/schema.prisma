@@ -18,6 +18,7 @@ model User {
   status                  UserStatus               @default(ACTIVE)
   lastLoginAt             DateTime?
   loginCount              Int                      @default(0)
+  onboardingCompleted     Boolean                  @default(false)
   deletedAt               DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
