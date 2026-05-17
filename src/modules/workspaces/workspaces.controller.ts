@@ -1,4 +1,4 @@
-import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
+import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 
 import { CreateWorkspaceDto, UpdateWorkspaceSettingsDto } from './dto';
@@ -21,6 +21,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id/settings')
+  @WorkspaceMember()
   @EmailVerified()
   async updateSettings(@Param('id') workspaceId: string, @Body() dto: UpdateWorkspaceSettingsDto) {
     return this.workspacesService.updateSettings(workspaceId, dto);

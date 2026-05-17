@@ -1,4 +1,4 @@
-import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
+import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
 import { CreateVehicleDto } from './dto';
@@ -6,6 +6,7 @@ import { VehiclesService } from './vehicles.service';
 
 @Controller('workspaces/:workspaceId/vehicles')
 @Auth()
+@WorkspaceMember()
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
