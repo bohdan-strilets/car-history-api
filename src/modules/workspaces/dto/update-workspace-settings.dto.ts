@@ -1,5 +1,6 @@
+import { WorkspaceConstraints } from '@common/validation';
 import { Currency, DateFormat, DistanceUnit, FuelUnit } from '@prisma/client';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateWorkspaceSettingsDto {
   @IsOptional()
@@ -8,6 +9,7 @@ export class UpdateWorkspaceSettingsDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(WorkspaceConstraints.TIMEZONE_MAX)
   declare timezone?: string;
 
   @IsOptional()
