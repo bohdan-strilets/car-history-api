@@ -1,4 +1,4 @@
-import { Auth, CurrentUserId } from '@common/decorators';
+import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 
 import { CreateVehicleDto } from './dto';
@@ -15,6 +15,7 @@ export class VehiclesController {
   }
 
   @Post()
+  @EmailVerified()
   async create(
     @CurrentUserId() userId: string,
     @Param('workspaceId') workspaceId: string,

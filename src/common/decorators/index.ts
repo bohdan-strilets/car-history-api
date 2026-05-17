@@ -2,5 +2,6 @@ export { Auth } from './auth.decorator';
 export { CurrentSessionId } from './current-session-id.decorator';
 export { CurrentUserId } from './current-user-id.decorator';
 export { CurrentUser } from './current-user.decorator';
+export { EmailVerified } from './email-verified.decorator';
 export { GoogleAuth } from './google-auth.decorator';
 export { GoogleUser } from './google-user.decorator';
