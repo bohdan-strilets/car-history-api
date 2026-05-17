@@ -98,6 +98,8 @@ export class UsersService {
         email: formattedEmail,
         firstName: dto.firstName,
         lastName: dto.lastName,
+        avatarUrl: dto.avatarUrl,
+        emailVerified: true,
       };
 
       const user = await this.usersRepo.create(userPayload, tx);

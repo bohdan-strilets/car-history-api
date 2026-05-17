@@ -106,12 +106,14 @@ export class AuthController {
   @GoogleAuth()
   async googleCallback(
     @GoogleUser() googleUser: CreateGoogleUserDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res() res: Response,
     @Req() req: Request,
-  ): Promise<AuthResponseDto> {
+  ): Promise<void> {
     const result = await this.authService.googleAuth(googleUser, req);
     setRefreshTokenCookie(res, result.refreshToken, this.config);
-    return { accessToken: result.accessToken, user: result.user };
+
+    const redirectUrl = `${this.config.frontendUrl}/auth/google/callback?accessToken=${result.accessToken}`;
+    res.redirect(redirectUrl);
   }
 
   @Get('me')
