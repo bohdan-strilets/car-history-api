@@ -3,8 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { Role, Workspace } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
-import { CreateWorkspaceDto, WorkspaceResponseDto } from './dto';
-import { toWorkspaceResponse } from './mappers';
+import {
+  CreateWorkspaceDto,
+  UpdateWorkspaceSettingsDto,
+  WorkspaceResponseDto,
+  WorkspaceSettingsResponseDto,
+} from './dto';
+import { toWorkspaceResponse, toWorkspaceSettingsResponse } from './mappers';
 import { WorkspaceMembersRepo } from './workspace-members.repository';
 import { WorkspaceSettingsRepo } from './workspace-settings.repository';
 import { WorkspacesRepo } from './workspaces.repository';
@@ -45,5 +50,15 @@ export class WorkspacesService {
 
       return toWorkspaceResponse(workspace);
     });
+  }
+
+  async updateSettings(
+    workspaceId: string,
+    dto: UpdateWorkspaceSettingsDto,
+  ): Promise<WorkspaceSettingsResponseDto> {
+    await this.getById(workspaceId);
+
+    const settings = await this.workspaceSettingsRepo.update(workspaceId, dto);
+    return toWorkspaceSettingsResponse(settings);
   }
 }

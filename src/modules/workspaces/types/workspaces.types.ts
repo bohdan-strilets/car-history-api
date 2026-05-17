@@ -1,4 +1,4 @@
-import { Role, WorkspaceType } from '@prisma/client';
+import { Currency, DateFormat, DistanceUnit, FuelUnit, Role, WorkspaceType } from '@prisma/client';
 
 export interface CreateWorkspaceInput {
   ownerId: string;
@@ -10,4 +10,12 @@ export interface CreateWorkspaceMemberInput {
   workspaceId: string;
   userId: string;
   role: Role;
+}
+
+export interface UpdateWorkspaceSettingsInput {
+  currency?: Currency;
+  timezone?: string;
+  distanceUnit?: DistanceUnit;
+  fuelUnit?: FuelUnit;
+  dateFormat?: DateFormat;
 }

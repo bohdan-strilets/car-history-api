@@ -1,7 +1,7 @@
 import { Auth, CurrentUserId } from '@common/decorators';
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 
-import { CreateWorkspaceDto } from './dto';
+import { CreateWorkspaceDto, UpdateWorkspaceSettingsDto } from './dto';
 import { WorkspacesService } from './workspaces.service';
 
 @Controller('workspaces')
@@ -17,5 +17,10 @@ export class WorkspacesController {
   @Post()
   async create(@CurrentUserId() userId: string, @Body() dto: CreateWorkspaceDto) {
     return this.workspacesService.create(userId, dto);
+  }
+
+  @Patch(':id/settings')
+  async updateSettings(@Param('id') workspaceId: string, @Body() dto: UpdateWorkspaceSettingsDto) {
+    return this.workspacesService.updateSettings(workspaceId, dto);
   }
 }
