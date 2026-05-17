@@ -5,3 +5,4 @@ export { CurrentUser } from './current-user.decorator';
 export { EmailVerified } from './email-verified.decorator';
 export { GoogleAuth } from './google-auth.decorator';
 export { GoogleUser } from './google-user.decorator';
+export { WorkspaceMember } from './workspace-member.decorator';
