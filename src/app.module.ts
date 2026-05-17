@@ -4,6 +4,7 @@ import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions';
 import { TokensModule } from '@modules/tokens';
 import { UsersModule } from '@modules/users';
+import { WorkspacesModule } from '@modules/workspaces';
 import { Module } from '@nestjs/common';
 
 import { AppConfigModule } from './config';
@@ -19,6 +20,7 @@ import { PrismaModule } from './prisma';
     SessionsModule,
     AuthModule,
     MailModule,
+    WorkspacesModule,
   ],
 })
 export class AppModule {}

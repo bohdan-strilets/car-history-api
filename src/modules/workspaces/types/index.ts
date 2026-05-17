@@ -1,1 +1,1 @@
-export type { CreateWorkspaceInput } from './workspaces.types';
+export type { CreateWorkspaceInput, CreateWorkspaceMemberInput } from './workspaces.types';
