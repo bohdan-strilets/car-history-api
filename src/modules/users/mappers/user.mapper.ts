@@ -11,6 +11,7 @@ export const toUserResponse = (user: User): UserResponseDto => {
     lastName: user.lastName,
     avatarUrl: user.avatarUrl,
     status: user.status,
+    onboardingCompleted: user.onboardingCompleted,
     createdAt: user.createdAt,
   };
 };

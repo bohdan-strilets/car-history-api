@@ -8,5 +8,6 @@ export class UserResponseDto {
   declare lastName: string;
   declare avatarUrl: string | null;
   declare status: UserStatus;
+  declare onboardingCompleted: boolean;
   declare createdAt: Date;
 }
