@@ -76,6 +76,10 @@ export class UsersService {
     return toUserResponse(user);
   }
 
+  async completeOnboarding(userId: string): Promise<void> {
+    await this.usersRepo.completeOnboarding(userId);
+  }
+
   // ─── Register ─────────────────────────────────────────────────────────────
 
   async createUser(dto: CreateUserDto): Promise<User> {
