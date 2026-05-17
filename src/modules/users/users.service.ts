@@ -13,9 +13,15 @@ import { User, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
-import { CreateGoogleUserDto, CreateUserDto, UserProfileResponseDto } from './dto';
+import {
+  CreateGoogleUserDto,
+  CreateUserDto,
+  UpdateUserDto,
+  UserProfileResponseDto,
+  UserResponseDto,
+} from './dto';
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
-import { toUserProfileResponse } from './mappers';
+import { toUserProfileResponse, toUserResponse } from './mappers';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
 import { UserSettingsRepo } from './user-settings.repository';
 import { UsersRepo } from './users.repository';
@@ -63,6 +69,11 @@ export class UsersService {
     if (!settings) throw new NotFoundException(ErrorCodes.User.NOT_FOUND);
 
     return toUserProfileResponse(user, settings);
+  }
+
+  async updateMe(userId: string, dto: UpdateUserDto): Promise<UserResponseDto> {
+    const user = await this.usersRepo.update(userId, dto);
+    return toUserResponse(user);
   }
 
   // ─── Register ─────────────────────────────────────────────────────────────

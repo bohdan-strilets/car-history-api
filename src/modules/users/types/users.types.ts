@@ -12,3 +12,8 @@ export interface CreateUserInput {
 export interface UpdateStatusInput {
   status: UserStatus;
 }
+
+export interface UpdateUserInput {
+  firstName?: string;
+  lastName?: string;
+}

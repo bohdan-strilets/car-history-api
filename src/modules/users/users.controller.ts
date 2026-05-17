@@ -1,6 +1,7 @@
 import { Auth, CurrentUserId } from '@common/decorators';
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 
+import { UpdateUserDto } from './dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -11,5 +12,10 @@ export class UsersController {
   @Get('me')
   async getMe(@CurrentUserId() userId: string) {
     return this.usersService.getProfile(userId);
+  }
+
+  @Patch('me')
+  async updateMe(@CurrentUserId() userId: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.updateMe(userId, dto);
   }
 }
