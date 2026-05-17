@@ -6,7 +6,7 @@ import {
 import { Auth, CurrentSessionId, CurrentUserId, GoogleAuth, GoogleUser } from '@common/decorators';
 import { ErrorCodes, UnauthorizedException } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
-import { CreateGoogleUserDto } from '@modules/users';
+import { CreateGoogleUserDto, UserResponseDto } from '@modules/users';
 import { CreateUserDto } from '@modules/users/dto/create-user.dto';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -112,5 +112,11 @@ export class AuthController {
     const result = await this.authService.googleAuth(googleUser, req);
     setRefreshTokenCookie(res, result.refreshToken, this.config);
     return { accessToken: result.accessToken, user: result.user };
+  }
+
+  @Get('me')
+  @Auth()
+  async me(@CurrentUserId() userId: string): Promise<UserResponseDto> {
+    return this.authService.me(userId);
   }
 }

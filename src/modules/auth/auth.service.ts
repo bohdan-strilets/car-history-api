@@ -3,7 +3,7 @@ import { parseDeviceName, parseIpAddress } from '@common/utils';
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
 import { SessionsService } from '@modules/sessions/sessions.service';
-import { CreateGoogleUserDto, CreateUserDto } from '@modules/users';
+import { CreateGoogleUserDto, CreateUserDto, UserResponseDto } from '@modules/users';
 import { toUserResponse } from '@modules/users/mappers/user.mapper';
 import { UsersService } from '@modules/users/users.service';
 import { Injectable } from '@nestjs/common';
@@ -75,6 +75,11 @@ export class AuthService {
     const user = await this.usersService.getById(session.userId);
 
     return { accessToken, refreshToken, user: toUserResponse(user) };
+  }
+
+  async me(userId: string): Promise<UserResponseDto> {
+    const user = await this.usersService.getById(userId);
+    return toUserResponse(user);
   }
 
   // ─── Logout ───────────────────────────────────────────────────────────────
