@@ -8,7 +8,7 @@ export class WorkspaceMemberGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const userId = request.user?.id;
+    const userId = request.user?.sub;
     const workspaceId = request.params?.workspaceId ?? request.params?.id;
 
     const workspace = await this.prisma.workspace.findUnique({
