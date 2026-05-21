@@ -12,7 +12,7 @@ export interface CreateVehicleInput {
   plateNumber: string;
   engineDisplacementCc: number;
   bodyType: BodyType;
-  fuelType: FuelType;
+  fuelType: FuelType[];
   transmission: Transmission;
   driveType: DriveType;
   color: string;

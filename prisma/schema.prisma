@@ -286,7 +286,7 @@ model Vehicle {
   plateNumber          String
   engineDisplacementCc Int
   bodyType             BodyType
-  fuelType             FuelType
+  fuelType             FuelType[]
   transmission         Transmission
   driveType            DriveType
   color                String

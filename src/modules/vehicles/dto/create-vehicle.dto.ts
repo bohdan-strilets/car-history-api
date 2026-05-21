@@ -55,7 +55,7 @@ export class CreateVehicleDto {
   declare bodyType: BodyType;
 
   @IsEnum(FuelType)
-  declare fuelType: FuelType;
+  declare fuelType: FuelType[];
 
   @IsEnum(Transmission)
   declare transmission: Transmission;

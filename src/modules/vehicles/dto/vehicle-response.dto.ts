@@ -13,7 +13,7 @@ export class VehicleResponseDto {
   declare plateNumber: string;
   declare engineDisplacementCc: number;
   declare bodyType: BodyType;
-  declare fuelType: FuelType;
+  declare fuelType: FuelType[];
   declare transmission: Transmission;
   declare driveType: DriveType;
   declare color: string;
