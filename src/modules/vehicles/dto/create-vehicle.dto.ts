@@ -1,6 +1,7 @@
 import { VehicleConstraints } from '@common/validation';
 import { BodyType, DriveType, FuelType, Transmission } from '@prisma/client';
 import {
+  IsArray,
   IsEnum,
   IsInt,
   IsOptional,
@@ -54,7 +55,8 @@ export class CreateVehicleDto {
   @IsEnum(BodyType)
   declare bodyType: BodyType;
 
-  @IsEnum(FuelType)
+  @IsArray()
+  @IsEnum(FuelType, { each: true })
   declare fuelType: FuelType[];
 
   @IsEnum(Transmission)
