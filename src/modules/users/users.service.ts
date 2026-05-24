@@ -9,7 +9,7 @@ import {
 import { createExpiresAt, formatEmail } from '@common/utils';
 import { AppConfigService } from '@config/config.service';
 import { Injectable } from '@nestjs/common';
-import { User, UserStatus } from '@prisma/client';
+import { User, UserSettings, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
@@ -17,6 +17,7 @@ import {
   CreateGoogleUserDto,
   CreateUserDto,
   UpdateUserDto,
+  UpdateUserSettingsDto,
   UserProfileResponseDto,
   UserResponseDto,
 } from './dto';
@@ -242,6 +243,12 @@ export class UsersService {
       passwordHash,
       passwordChangedAt: new Date(),
     });
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────────────────
+
+  async updateSettings(userId: string, dto: UpdateUserSettingsDto): Promise<UserSettings> {
+    return this.userSettingsRepo.update(userId, dto);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

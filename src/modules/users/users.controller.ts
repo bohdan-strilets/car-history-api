@@ -1,7 +1,7 @@
 import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 
-import { UpdateUserDto } from './dto';
+import { UpdateUserDto, UpdateUserSettingsDto } from './dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -24,5 +24,11 @@ export class UsersController {
   @EmailVerified()
   async completeOnboarding(@CurrentUserId() userId: string) {
     return this.usersService.completeOnboarding(userId);
+  }
+
+  @Patch('me/settings')
+  @EmailVerified()
+  async updateSettings(@CurrentUserId() userId: string, @Body() dto: UpdateUserSettingsDto) {
+    return this.usersService.updateSettings(userId, dto);
   }
 }
