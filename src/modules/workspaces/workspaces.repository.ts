@@ -4,7 +4,12 @@ import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
 import { workspaceOwnerSelect } from './selects';
-import { CreateWorkspaceInput, UpdateWorkspaceInput, WorkspaceWithOwner } from './types';
+import {
+  CreateWorkspaceInput,
+  UpdateWorkspaceInput,
+  WorkspaceWithMeta,
+  WorkspaceWithOwner,
+} from './types';
 
 @Injectable()
 export class WorkspacesRepo {
@@ -17,11 +22,20 @@ export class WorkspacesRepo {
     });
   }
 
-  async findAllByUserId(userId: string): Promise<Workspace[]> {
+  async findAllByUserId(userId: string): Promise<WorkspaceWithMeta[] | null> {
     return this.prisma.workspace.findMany({
       where: {
         deletedAt: null,
         members: { some: { userId } },
+      },
+      include: {
+        members: {
+          where: { userId },
+          select: { role: true },
+        },
+        _count: {
+          select: { members: true },
+        },
       },
     });
   }
@@ -34,7 +48,10 @@ export class WorkspacesRepo {
   async findByIdWithOwner(workspaceId: string): Promise<WorkspaceWithOwner | null> {
     return this.prisma.workspace.findUnique({
       where: { id: workspaceId, deletedAt: null },
-      include: { owner: { select: workspaceOwnerSelect } },
+      include: {
+        owner: { select: workspaceOwnerSelect },
+        _count: { select: { members: true } },
+      },
     });
   }
 

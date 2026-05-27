@@ -30,6 +30,7 @@ import {
   toWorkspaceSettingsResponse,
   toWorkspaceWithOwnerResponse,
 } from './mappers';
+import { WorkspaceId } from './types';
 import { WorkspaceInvitesRepo } from './workspace-invites.repository';
 import { WorkspaceMembersRepo } from './workspace-members.repository';
 import { WorkspaceSettingsRepo } from './workspace-settings.repository';
@@ -56,18 +57,26 @@ export class WorkspacesService {
 
   async getAllByUserId(userId: string): Promise<WorkspaceResponseDto[]> {
     const workspaces = await this.workspacesRepo.findAllByUserId(userId);
+    if (!workspaces) return [];
     return workspaces.map(toWorkspaceResponse);
   }
 
-  async getByIdWithOwner(workspaceId: string): Promise<WorkspaceWithOwnerResponseDto> {
+  async getByIdWithOwner(
+    workspaceId: string,
+    userId: string,
+  ): Promise<WorkspaceWithOwnerResponseDto> {
     const workspace = await this.workspacesRepo.findByIdWithOwner(workspaceId);
     if (!workspace) throw new NotFoundException(ErrorCodes.Workspace.NOT_FOUND);
-    return toWorkspaceWithOwnerResponse(workspace);
+
+    const member = await this.workspaceMembersRepo.findByWorkspaceAndUser(workspaceId, userId);
+    if (!member) throw new ForbiddenException(ErrorCodes.Workspace.ACCESS_DENIED);
+
+    return toWorkspaceWithOwnerResponse(workspace, member.role);
   }
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
-  async create(userId: string, dto: CreateWorkspaceDto): Promise<WorkspaceResponseDto> {
+  async create(userId: string, dto: CreateWorkspaceDto): Promise<WorkspaceId> {
     return this.prisma.$transaction(async (tx) => {
       const workspace = await this.workspacesRepo.create({ ownerId: userId, ...dto }, tx);
       await this.workspaceMembersRepo.create(
@@ -75,22 +84,18 @@ export class WorkspacesService {
         tx,
       );
       await this.workspaceSettingsRepo.create(workspace.id, tx);
-      return toWorkspaceResponse(workspace);
+      return { id: workspace.id };
     });
   }
 
-  async update(
-    workspaceId: string,
-    dto: UpdateWorkspaceDto,
-    userId: string,
-  ): Promise<WorkspaceResponseDto> {
+  async update(workspaceId: string, dto: UpdateWorkspaceDto, userId: string): Promise<WorkspaceId> {
     await this.getById(workspaceId);
     const member = await this.workspaceMembersRepo.findByWorkspaceAndUser(workspaceId, userId);
     if (!member || member.role === Role.MEMBER) {
       throw new ForbiddenException(ErrorCodes.Workspace.INSUFFICIENT_ROLE);
     }
     const workspace = await this.workspacesRepo.update(workspaceId, dto);
-    return toWorkspaceResponse(workspace);
+    return { id: workspace.id };
   }
 
   async delete(workspaceId: string, userId: string): Promise<void> {
@@ -209,7 +214,7 @@ export class WorkspacesService {
     return toWorkspaceInviteResponse(invite);
   }
 
-  async acceptInvite(token: string, userId: string): Promise<WorkspaceResponseDto> {
+  async acceptInvite(token: string, userId: string): Promise<WorkspaceId> {
     const user = await this.usersService.getById(userId);
     const invite = await this.validateInvite(token, user.email);
 
@@ -226,7 +231,7 @@ export class WorkspacesService {
         tx,
       );
       const workspace = await this.workspacesRepo.findById(invite.workspaceId, tx);
-      return toWorkspaceResponse(workspace!);
+      return { id: workspace!.id };
     });
   }
 

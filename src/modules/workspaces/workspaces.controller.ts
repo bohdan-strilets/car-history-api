@@ -47,8 +47,8 @@ export class WorkspacesController {
 
   @Get(':id')
   @WorkspaceMember()
-  async getOne(@Param('id') workspaceId: string) {
-    return this.workspacesService.getByIdWithOwner(workspaceId);
+  async getOne(@Param('id') workspaceId: string, @CurrentUserId() userId: string) {
+    return this.workspacesService.getByIdWithOwner(workspaceId, userId);
   }
 
   @Patch(':id')

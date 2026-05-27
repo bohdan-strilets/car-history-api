@@ -41,7 +41,10 @@ export interface WorkspaceOwner {
   avatarUrl: string | null;
 }
 
-export type WorkspaceWithOwner = Workspace & { owner: WorkspaceOwner };
+export type WorkspaceWithOwner = Workspace & {
+  owner: WorkspaceOwner;
+  _count: { members: number };
+};
 
 export interface CreateWorkspaceInviteInput {
   workspaceId: string;
@@ -51,3 +54,10 @@ export interface CreateWorkspaceInviteInput {
   token: string;
   expiresAt: Date;
 }
+
+export type WorkspaceWithMeta = Workspace & {
+  members: { role: Role }[];
+  _count: { members: number };
+};
+
+export type WorkspaceId = { id: string };

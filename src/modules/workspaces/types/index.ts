@@ -4,6 +4,8 @@ export type {
   CreateWorkspaceMemberInput,
   UpdateWorkspaceInput,
   UpdateWorkspaceSettingsInput,
+  WorkspaceId,
   WorkspaceOwner,
+  WorkspaceWithMeta,
   WorkspaceWithOwner,
 } from './workspaces.types';
