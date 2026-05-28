@@ -1,11 +1,13 @@
-export type {
-  CreateWorkspaceInput,
+export {
   CreateWorkspaceInviteInput,
   CreateWorkspaceMemberInput,
+  WorkspaceMemberWithUser,
+} from './workspace-members.type';
+export { UpdateWorkspaceSettingsInput } from './workspace-settings.type';
+export {
+  CreateWorkspaceInput,
   UpdateWorkspaceInput,
-  UpdateWorkspaceSettingsInput,
-  WorkspaceId,
-  WorkspaceOwner,
+  WorkspaceUserInfo,
   WorkspaceWithMeta,
   WorkspaceWithOwner,
-} from './workspaces.types';
+} from './workspace.type';

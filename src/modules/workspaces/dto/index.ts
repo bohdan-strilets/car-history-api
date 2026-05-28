@@ -1,10 +1,15 @@
-export { CreateInviteDto } from './create-invite.dto';
-export { CreateWorkspaceDto } from './create-workspace.dto';
-export { UpdateMemberRoleDto } from './update-member-role.dto';
-export { UpdateWorkspaceSettingsDto } from './update-workspace-settings.dto';
-export { UpdateWorkspaceDto } from './update-workspace.dto';
-export { WorkspaceInviteResponseDto } from './workspace-invite-response.dto';
-export { WorkspaceMemberResponseDto } from './workspace-member-response.dto';
-export { WorkspaceResponseDto } from './workspace-response.dto';
-export { WorkspaceSettingsResponseDto } from './workspace-settings-response.dto';
-export { WorkspaceWithOwnerResponseDto } from './workspace-with-owner-response.dto';
+export {
+  CreateInviteDto,
+  UpdateMemberRoleDto,
+  WorkspaceInviteResponseDto,
+  WorkspaceMemberWithUserResponseDto,
+} from './workspace-members.dto';
+export { UpdateWorkspaceSettingsDto, WorkspaceSettingsResponseDto } from './workspace-settings.dto';
+export {
+  CreateWorkspaceDto,
+  UpdateWorkspaceDto,
+  WorkspaceIdDto,
+  WorkspaceResponseDto,
+  WorkspaceUserDto,
+  WorkspaceWithOwnerResponseDto,
+} from './workspace.dto';

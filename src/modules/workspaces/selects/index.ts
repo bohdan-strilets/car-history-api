@@ -1,1 +1,1 @@
-export { workspaceOwnerSelect } from './workspace-owner.select';
+export { workspaceUserInfoSelect } from './workspace.select';

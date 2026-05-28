@@ -2,6 +2,8 @@ import { WorkspaceConstraints } from '@common/validation';
 import { Currency, DateFormat, DistanceUnit, FuelUnit } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 
+// Create and Update DTOs
+
 export class UpdateWorkspaceSettingsDto {
   @IsOptional()
   @IsEnum(Currency)
@@ -23,4 +25,14 @@ export class UpdateWorkspaceSettingsDto {
   @IsOptional()
   @IsEnum(DateFormat)
   declare dateFormat?: DateFormat;
+}
+
+// Response DTOs
+
+export class WorkspaceSettingsResponseDto {
+  declare currency: Currency;
+  declare timezone: string;
+  declare distanceUnit: DistanceUnit;
+  declare fuelUnit: FuelUnit;
+  declare dateFormat: DateFormat;
 }

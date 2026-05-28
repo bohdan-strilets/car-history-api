@@ -17,8 +17,9 @@ import {
   UpdateMemberRoleDto,
   UpdateWorkspaceDto,
   UpdateWorkspaceSettingsDto,
+  WorkspaceIdDto,
   WorkspaceInviteResponseDto,
-  WorkspaceMemberResponseDto,
+  WorkspaceMemberWithUserResponseDto,
   WorkspaceResponseDto,
   WorkspaceSettingsResponseDto,
   WorkspaceWithOwnerResponseDto,
@@ -30,7 +31,6 @@ import {
   toWorkspaceSettingsResponse,
   toWorkspaceWithOwnerResponse,
 } from './mappers';
-import { WorkspaceId } from './types';
 import { WorkspaceInvitesRepo } from './workspace-invites.repository';
 import { WorkspaceMembersRepo } from './workspace-members.repository';
 import { WorkspaceSettingsRepo } from './workspace-settings.repository';
@@ -57,7 +57,6 @@ export class WorkspacesService {
 
   async getAllByUserId(userId: string): Promise<WorkspaceResponseDto[]> {
     const workspaces = await this.workspacesRepo.findAllByUserId(userId);
-    if (!workspaces) return [];
     return workspaces.map(toWorkspaceResponse);
   }
 
@@ -76,7 +75,7 @@ export class WorkspacesService {
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
-  async create(userId: string, dto: CreateWorkspaceDto): Promise<WorkspaceId> {
+  async create(userId: string, dto: CreateWorkspaceDto): Promise<WorkspaceIdDto> {
     return this.prisma.$transaction(async (tx) => {
       const workspace = await this.workspacesRepo.create({ ownerId: userId, ...dto }, tx);
       await this.workspaceMembersRepo.create(
@@ -88,7 +87,11 @@ export class WorkspacesService {
     });
   }
 
-  async update(workspaceId: string, dto: UpdateWorkspaceDto, userId: string): Promise<WorkspaceId> {
+  async update(
+    workspaceId: string,
+    dto: UpdateWorkspaceDto,
+    userId: string,
+  ): Promise<WorkspaceIdDto> {
     await this.getById(workspaceId);
     const member = await this.workspaceMembersRepo.findByWorkspaceAndUser(workspaceId, userId);
     if (!member || member.role === Role.MEMBER) {
@@ -126,7 +129,7 @@ export class WorkspacesService {
 
   // ─── Members ──────────────────────────────────────────────────────────────
 
-  async getMembers(workspaceId: string): Promise<WorkspaceMemberResponseDto[]> {
+  async getMembers(workspaceId: string): Promise<WorkspaceMemberWithUserResponseDto[]> {
     await this.getById(workspaceId);
     const members = await this.workspaceMembersRepo.findAllByWorkspaceId(workspaceId);
     return members.map(toWorkspaceMemberResponse);
@@ -137,7 +140,7 @@ export class WorkspacesService {
     memberId: string,
     dto: UpdateMemberRoleDto,
     actingMember: WorkspaceMember,
-  ): Promise<WorkspaceMemberResponseDto> {
+  ): Promise<WorkspaceMemberWithUserResponseDto> {
     const target = await this.workspaceMembersRepo.findById(memberId);
 
     if (!target || target.workspaceId !== workspaceId) {
@@ -152,8 +155,10 @@ export class WorkspacesService {
       throw new ForbiddenException(ErrorCodes.Workspace.INSUFFICIENT_ROLE);
     }
 
-    const updated = await this.workspaceMembersRepo.updateRole(memberId, dto.role);
-    return toWorkspaceMemberResponse(updated);
+    await this.workspaceMembersRepo.updateRole(memberId, dto.role);
+
+    const updated = await this.workspaceMembersRepo.findByIdWithUser(memberId);
+    return toWorkspaceMemberResponse(updated!);
   }
 
   async removeMember(
@@ -214,7 +219,7 @@ export class WorkspacesService {
     return toWorkspaceInviteResponse(invite);
   }
 
-  async acceptInvite(token: string, userId: string): Promise<WorkspaceId> {
+  async acceptInvite(token: string, userId: string): Promise<WorkspaceIdDto> {
     const user = await this.usersService.getById(userId);
     const invite = await this.validateInvite(token, user.email);
 

@@ -3,7 +3,8 @@ import { Role, WorkspaceMember } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
-import { CreateWorkspaceMemberInput } from './types';
+import { workspaceUserInfoSelect } from './selects';
+import { CreateWorkspaceMemberInput, WorkspaceMemberWithUser } from './types';
 
 @Injectable()
 export class WorkspaceMembersRepo {
@@ -23,10 +24,18 @@ export class WorkspaceMembersRepo {
     });
   }
 
-  async findAllByWorkspaceId(workspaceId: string): Promise<WorkspaceMember[]> {
+  async findAllByWorkspaceId(workspaceId: string): Promise<WorkspaceMemberWithUser[]> {
     return this.prisma.workspaceMember.findMany({
       where: { workspaceId },
+      include: { user: { select: workspaceUserInfoSelect } },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async findByIdWithUser(memberId: string): Promise<WorkspaceMemberWithUser | null> {
+    return this.prisma.workspaceMember.findUnique({
+      where: { id: memberId },
+      include: { user: { select: workspaceUserInfoSelect } },
     });
   }
 

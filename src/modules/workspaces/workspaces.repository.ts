@@ -3,7 +3,7 @@ import { Workspace } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
-import { workspaceOwnerSelect } from './selects';
+import { workspaceUserInfoSelect } from './selects';
 import {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
@@ -22,7 +22,7 @@ export class WorkspacesRepo {
     });
   }
 
-  async findAllByUserId(userId: string): Promise<WorkspaceWithMeta[] | null> {
+  async findAllByUserId(userId: string): Promise<WorkspaceWithMeta[]> {
     return this.prisma.workspace.findMany({
       where: {
         deletedAt: null,
@@ -49,7 +49,7 @@ export class WorkspacesRepo {
     return this.prisma.workspace.findUnique({
       where: { id: workspaceId, deletedAt: null },
       include: {
-        owner: { select: workspaceOwnerSelect },
+        owner: { select: workspaceUserInfoSelect },
         _count: { select: { members: true } },
       },
     });
