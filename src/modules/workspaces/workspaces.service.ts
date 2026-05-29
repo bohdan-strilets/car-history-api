@@ -6,6 +6,8 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@common/exceptions';
+import { AppConfigService } from '@config/config.service';
+import { MailService } from '@modules/mail';
 import { UsersService } from '@modules/users';
 import { Injectable } from '@nestjs/common';
 import { InviteStatus, Role, Workspace, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
@@ -44,6 +46,8 @@ export class WorkspacesService {
     private readonly workspaceSettingsRepo: WorkspaceSettingsRepo,
     private readonly workspaceInvitesRepo: WorkspaceInvitesRepo,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
+    private readonly config: AppConfigService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -190,7 +194,7 @@ export class WorkspacesService {
     invitedById: string,
     dto: CreateInviteDto,
   ): Promise<WorkspaceInviteResponseDto> {
-    await this.getById(workspaceId);
+    const workspace = await this.getById(workspaceId);
 
     const existing = await this.workspaceInvitesRepo.findPendingByWorkspaceAndEmail(
       workspaceId,
@@ -208,6 +212,18 @@ export class WorkspacesService {
       role: dto.role ?? Role.MEMBER,
       token,
       expiresAt,
+    });
+
+    const invitedBy = await this.usersService.getById(invitedById);
+    const inviteUrl = `${this.config.frontendUrl}/invite/${token}`;
+
+    await this.mailService.sendWorkspaceInvite({
+      to: dto.email,
+      firstName: dto.email,
+      invitedByName: `${invitedBy.firstName} ${invitedBy.lastName}`,
+      workspaceName: workspace.name,
+      role: dto.role ?? Role.MEMBER,
+      inviteUrl,
     });
 
     return toWorkspaceInviteResponse(invite);

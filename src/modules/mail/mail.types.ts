@@ -44,3 +44,10 @@ export interface NewDeviceLoginParams extends BaseTemplateParams {
   loginAt: Date;
   resetUrl: string;
 }
+
+export interface WorkspaceInviteParams extends BaseTemplateParams {
+  invitedByName: string;
+  workspaceName: string;
+  role: string;
+  inviteUrl: string;
+}

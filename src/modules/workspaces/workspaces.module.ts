@@ -1,4 +1,6 @@
 import { WorkspaceMemberGuard } from '@common/guards';
+import { AppConfigModule } from '@config/config.module';
+import { MailModule } from '@modules/mail';
 import { UsersModule } from '@modules/users';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
@@ -12,7 +14,7 @@ import { WorkspacesRepo } from './workspaces.repository';
 import { WorkspacesService } from './workspaces.service';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
+  imports: [PrismaModule, UsersModule, MailModule, AppConfigModule],
   controllers: [WorkspacesController, WorkspaceInvitesController],
   providers: [
     WorkspacesService,

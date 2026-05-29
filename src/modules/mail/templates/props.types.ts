@@ -72,3 +72,11 @@ export interface NewDeviceLoginProps {
   loginAt: Date;
   resetUrl: string;
 }
+
+export interface WorkspaceInviteProps {
+  firstName: string;
+  invitedByName: string;
+  workspaceName: string;
+  role: string;
+  inviteUrl: string;
+}

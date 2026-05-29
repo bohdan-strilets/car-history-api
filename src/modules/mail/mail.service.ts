@@ -12,6 +12,7 @@ import {
   PasswordChangedParams,
   ResetPasswordParams,
   WelcomeParams,
+  WorkspaceInviteParams,
 } from './mail.types';
 import {
   AccountLockedTemplate,
@@ -21,6 +22,7 @@ import {
   PasswordChangedTemplate,
   ResetPasswordTemplate,
   WelcomeTemplate,
+  WorkspaceInviteTemplate,
 } from './templates';
 
 @Injectable()
@@ -118,6 +120,23 @@ export class MailService {
       NewDeviceLoginTemplate({ firstName, deviceName, ipAddress, loginAt, resetUrl }),
     );
     const subject = 'Nowe logowanie do konta — Arvino';
+    await this.send({ to, subject, html });
+  }
+
+  // ─── Workspace ───────────────────────────────────────────────────────────
+
+  async sendWorkspaceInvite({
+    to,
+    firstName,
+    invitedByName,
+    workspaceName,
+    role,
+    inviteUrl,
+  }: WorkspaceInviteParams): Promise<void> {
+    const html = await render(
+      WorkspaceInviteTemplate({ firstName, invitedByName, workspaceName, role, inviteUrl }),
+    );
+    const subject = `Zaproszenie do workspace ${workspaceName} — Arvino`;
     await this.send({ to, subject, html });
   }
 }
