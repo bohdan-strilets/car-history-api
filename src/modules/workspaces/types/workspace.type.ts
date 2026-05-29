@@ -19,6 +19,12 @@ export interface WorkspaceUserInfo {
   avatarUrl: string | null;
 }
 
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  type: WorkspaceType;
+}
+
 export interface WorkspaceWithOwner extends Workspace {
   owner: WorkspaceUserInfo;
   _count: { members: number };

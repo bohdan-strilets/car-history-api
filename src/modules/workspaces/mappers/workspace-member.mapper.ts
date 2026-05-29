@@ -1,10 +1,5 @@
-import { User, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
-
 import { WorkspaceInviteResponseDto, WorkspaceMemberWithUserResponseDto } from '../dto';
-
-type WorkspaceMemberWithUser = WorkspaceMember & {
-  user: Pick<User, 'id' | 'firstName' | 'lastName' | 'email' | 'avatarUrl'>;
-};
+import { WorkspaceInviteWithWorkspace, WorkspaceMemberWithUser } from '../types';
 
 export const toWorkspaceMemberResponse = (
   member: WorkspaceMemberWithUser,
@@ -18,13 +13,16 @@ export const toWorkspaceMemberResponse = (
   user: member.user,
 });
 
-export const toWorkspaceInviteResponse = (invite: WorkspaceInvite): WorkspaceInviteResponseDto => ({
+export const toWorkspaceInviteResponse = (
+  invite: WorkspaceInviteWithWorkspace,
+): WorkspaceInviteResponseDto => ({
   id: invite.id,
   workspaceId: invite.workspaceId,
   invitedById: invite.invitedById,
   email: invite.email,
   role: invite.role,
   status: invite.status,
+  workspace: invite.workspace,
   expiresAt: invite.expiresAt,
   createdAt: invite.createdAt,
 });

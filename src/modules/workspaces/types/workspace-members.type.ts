@@ -1,6 +1,6 @@
-import { Role, WorkspaceMember } from '@prisma/client';
+import { Role, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
 
-import { WorkspaceUserInfo } from './workspace.type';
+import { WorkspaceInfo, WorkspaceUserInfo } from './workspace.type';
 
 export interface CreateWorkspaceMemberInput {
   workspaceId: string;
@@ -19,4 +19,8 @@ export interface CreateWorkspaceInviteInput {
 
 export interface WorkspaceMemberWithUser extends WorkspaceMember {
   user: WorkspaceUserInfo;
+}
+
+export interface WorkspaceInviteWithWorkspace extends WorkspaceInvite {
+  workspace: WorkspaceInfo;
 }

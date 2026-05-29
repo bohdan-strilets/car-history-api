@@ -1,7 +1,7 @@
 import { InviteStatus, Role } from '@prisma/client';
 import { IsEmail, IsEnum, IsOptional } from 'class-validator';
 
-import { WorkspaceUserDto } from './workspace.dto';
+import { WorkspaceInfoResponseDto, WorkspaceUserDto } from './workspace.dto';
 
 // Create and Update DTOs
 
@@ -38,6 +38,7 @@ export class WorkspaceInviteResponseDto {
   declare email: string;
   declare role: Role;
   declare status: InviteStatus;
+  declare workspace: WorkspaceInfoResponseDto;
   declare expiresAt: Date;
   declare createdAt: Date;
 }

@@ -36,6 +36,11 @@ export class WorkspaceUserDto {
   declare avatarUrl: string | null;
 }
 
+export class WorkspaceInfoResponseDto {
+  declare id: string;
+  declare name: string;
+  declare type: WorkspaceType;
+}
 export class WorkspaceResponseDto {
   declare id: string;
   declare ownerId: string;

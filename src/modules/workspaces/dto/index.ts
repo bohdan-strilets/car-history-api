@@ -9,6 +9,7 @@ export {
   CreateWorkspaceDto,
   UpdateWorkspaceDto,
   WorkspaceIdDto,
+  WorkspaceInfoResponseDto,
   WorkspaceResponseDto,
   WorkspaceUserDto,
   WorkspaceWithOwnerResponseDto,

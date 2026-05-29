@@ -33,6 +33,7 @@ import {
   toWorkspaceSettingsResponse,
   toWorkspaceWithOwnerResponse,
 } from './mappers';
+import { WorkspaceInfo } from './types';
 import { WorkspaceInvitesRepo } from './workspace-invites.repository';
 import { WorkspaceMembersRepo } from './workspace-members.repository';
 import { WorkspaceSettingsRepo } from './workspace-settings.repository';
@@ -226,13 +227,30 @@ export class WorkspacesService {
       inviteUrl,
     });
 
-    return toWorkspaceInviteResponse(invite);
+    const workspaceInfo: WorkspaceInfo = {
+      id: workspace.id,
+      name: workspace.name,
+      type: workspace.type,
+    };
+
+    return toWorkspaceInviteResponse({ ...invite, workspace: workspaceInfo });
   }
 
   async getInvite(token: string): Promise<WorkspaceInviteResponseDto> {
     const invite = await this.workspaceInvitesRepo.findByToken(token);
-    if (!invite) throw new NotFoundException(ErrorCodes.Workspace.INVITE_NOT_FOUND);
-    return toWorkspaceInviteResponse(invite);
+
+    if (!invite) {
+      throw new NotFoundException(ErrorCodes.Workspace.INVITE_NOT_FOUND);
+    }
+
+    const workspace = await this.getById(invite.workspaceId);
+    const workspaceInfo: WorkspaceInfo = {
+      id: workspace.id,
+      name: workspace.name,
+      type: workspace.type,
+    };
+
+    return toWorkspaceInviteResponse({ ...invite, workspace: workspaceInfo });
   }
 
   async acceptInvite(token: string, userId: string): Promise<WorkspaceIdDto> {
