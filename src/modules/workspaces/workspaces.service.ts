@@ -216,12 +216,15 @@ export class WorkspacesService {
     });
 
     const invitedBy = await this.usersService.getById(invitedById);
+    const existingUser = await this.usersService.getByEmail(dto.email);
+
+    const userFullName = `${invitedBy.firstName} ${invitedBy.lastName}`;
     const inviteUrl = `${this.config.frontendUrl}/invite/${token}`;
 
     await this.mailService.sendWorkspaceInvite({
       to: dto.email,
-      firstName: dto.email,
-      invitedByName: `${invitedBy.firstName} ${invitedBy.lastName}`,
+      firstName: existingUser?.firstName ?? dto.email,
+      invitedByName: userFullName,
       workspaceName: workspace.name,
       role: dto.role ?? Role.MEMBER,
       inviteUrl,
