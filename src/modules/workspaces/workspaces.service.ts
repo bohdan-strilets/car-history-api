@@ -271,6 +271,12 @@ export class WorkspacesService {
     return toWorkspaceInviteResponse({ ...invite, workspace: workspaceInfo });
   }
 
+  async getPendingInvites(workspaceId: string): Promise<WorkspaceInviteResponseDto[]> {
+    await this.getById(workspaceId);
+    const invites = await this.workspaceInvitesRepo.findPendingByWorkspaceId(workspaceId);
+    return invites.map(toWorkspaceInviteResponse);
+  }
+
   async acceptInvite(token: string, userId: string): Promise<WorkspaceIdDto> {
     const user = await this.usersService.getById(userId);
     const invite = await this.validateInvite(token, user.email);
@@ -296,6 +302,22 @@ export class WorkspacesService {
     const user = await this.usersService.getById(userId);
     await this.validateInvite(token, user.email);
     await this.workspaceInvitesRepo.updateStatus(token, InviteStatus.REJECTED);
+  }
+
+  async cancelInvite(
+    workspaceId: string,
+    inviteId: string,
+    actingMember: WorkspaceMember,
+  ): Promise<void> {
+    if (actingMember.role === Role.MEMBER) {
+      throw new ForbiddenException(ErrorCodes.Workspace.INSUFFICIENT_ROLE);
+    }
+    const invite = await this.workspaceInvitesRepo.findPendingByWorkspaceAndId(
+      workspaceId,
+      inviteId,
+    );
+    if (!invite) throw new NotFoundException(ErrorCodes.Workspace.INVITE_NOT_FOUND);
+    await this.workspaceInvitesRepo.deleteById(inviteId);
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────

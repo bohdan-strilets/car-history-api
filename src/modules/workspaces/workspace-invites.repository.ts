@@ -4,7 +4,7 @@ import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
 import { workspaceInfoSelect } from './selects';
-import { CreateWorkspaceInviteInput } from './types';
+import { CreateWorkspaceInviteInput, WorkspaceInviteWithWorkspace } from './types';
 
 @Injectable()
 export class WorkspaceInvitesRepo {
@@ -26,6 +26,23 @@ export class WorkspaceInvitesRepo {
     });
   }
 
+  async findPendingByWorkspaceAndId(
+    workspaceId: string,
+    id: string,
+  ): Promise<WorkspaceInvite | null> {
+    return this.prisma.workspaceInvite.findFirst({
+      where: { id, workspaceId, status: InviteStatus.PENDING },
+    });
+  }
+
+  async findPendingByWorkspaceId(workspaceId: string): Promise<WorkspaceInviteWithWorkspace[]> {
+    return this.prisma.workspaceInvite.findMany({
+      where: { workspaceId, status: InviteStatus.PENDING },
+      include: { workspace: { select: workspaceInfoSelect } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async create(input: CreateWorkspaceInviteInput, tx?: PrismaTxClient): Promise<WorkspaceInvite> {
     const client = tx ?? this.prisma;
     return client.workspaceInvite.create({ data: input });
@@ -41,5 +58,9 @@ export class WorkspaceInvitesRepo {
       where: { token },
       data: { status },
     });
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.workspaceInvite.delete({ where: { id } });
   }
 }

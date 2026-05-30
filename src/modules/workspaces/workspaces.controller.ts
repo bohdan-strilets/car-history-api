@@ -139,4 +139,22 @@ export class WorkspacesController {
   ) {
     return this.workspacesService.createInvite(workspaceId, userId, dto);
   }
+
+  @Get(':id/invites')
+  @WorkspaceMember()
+  async getPendingInvites(@Param('id') workspaceId: string) {
+    return this.workspacesService.getPendingInvites(workspaceId);
+  }
+
+  @Delete(':id/invites/:inviteId')
+  @WorkspaceMember()
+  @EmailVerified()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async cancelInvite(
+    @Param('id') workspaceId: string,
+    @Param('inviteId') inviteId: string,
+    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+  ) {
+    return this.workspacesService.cancelInvite(workspaceId, inviteId, member);
+  }
 }
