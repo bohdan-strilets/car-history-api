@@ -188,6 +188,21 @@ export class WorkspacesService {
     await this.workspaceMembersRepo.delete(memberId);
   }
 
+  async leaveWorkspace(
+    workspaceId: string,
+    userId: string,
+    actingMember: WorkspaceMember,
+  ): Promise<void> {
+    if (actingMember.role === Role.OWNER) {
+      throw new ForbiddenException(ErrorCodes.Workspace.OWNER_CANNOT_LEAVE);
+    }
+
+    const member = await this.workspaceMembersRepo.findByWorkspaceAndUser(workspaceId, userId);
+    if (!member) throw new NotFoundException(ErrorCodes.Workspace.NOT_FOUND);
+
+    await this.workspaceMembersRepo.delete(member.id);
+  }
+
   // ─── Invites ──────────────────────────────────────────────────────────────
 
   async createInvite(
@@ -216,7 +231,7 @@ export class WorkspacesService {
     });
 
     const invitedBy = await this.usersService.getById(invitedById);
-    const existingUser = await this.usersService.getByEmail(dto.email);
+    const existingUser = await this.usersService.findByEmail(dto.email);
 
     const userFullName = `${invitedBy.firstName} ${invitedBy.lastName}`;
     const inviteUrl = `${this.config.frontendUrl}/invite/${token}`;
