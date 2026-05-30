@@ -91,6 +91,18 @@ export class WorkspacesController {
     return this.workspacesService.getMembers(workspaceId);
   }
 
+  @Delete(':id/members/me')
+  @WorkspaceMember()
+  @EmailVerified()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async leaveWorkspace(
+    @Param('id') workspaceId: string,
+    @CurrentUserId() userId: string,
+    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+  ) {
+    return this.workspacesService.leaveWorkspace(workspaceId, userId, member);
+  }
+
   @Patch(':id/members/:memberId')
   @WorkspaceMember()
   @EmailVerified()
@@ -113,18 +125,6 @@ export class WorkspacesController {
     @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
   ) {
     return this.workspacesService.removeMember(workspaceId, memberId, member);
-  }
-
-  @Delete(':id/members/me')
-  @WorkspaceMember()
-  @EmailVerified()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async leaveWorkspace(
-    @Param('id') workspaceId: string,
-    @CurrentUserId() userId: string,
-    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
-  ) {
-    return this.workspacesService.leaveWorkspace(workspaceId, userId, member);
   }
 
   // ─── Invites ──────────────────────────────────────────────────────────────
