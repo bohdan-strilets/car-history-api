@@ -1,8 +1,8 @@
-import { ErrorCodes, NotFoundException } from '@common/exceptions';
+import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Injectable } from '@nestjs/common';
 import { Vehicle } from '@prisma/client';
 
-import { CreateVehicleDto, VehicleResponseDto } from './dto';
+import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from './dto';
 import { toVehicleResponse } from './mappers';
 import { VehiclesRepo } from './vehicles.repository';
 
@@ -41,5 +41,30 @@ export class VehiclesService {
     });
 
     return toVehicleResponse(vehicle);
+  }
+
+  async update(
+    workspaceId: string,
+    vehicleId: string,
+    dto: UpdateVehicleDto,
+  ): Promise<VehicleResponseDto> {
+    const vehicle = await this.getById(vehicleId);
+
+    if (vehicle.workspaceId !== workspaceId) {
+      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
+    }
+
+    const updated = await this.vehiclesRepo.update(vehicleId, dto);
+    return toVehicleResponse(updated);
+  }
+
+  async delete(workspaceId: string, vehicleId: string): Promise<void> {
+    const vehicle = await this.getById(vehicleId);
+
+    if (vehicle.workspaceId !== workspaceId) {
+      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
+    }
+
+    await this.vehiclesRepo.softDelete(vehicleId);
   }
 }

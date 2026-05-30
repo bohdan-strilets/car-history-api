@@ -1,7 +1,17 @@
 import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
-import { CreateVehicleDto } from './dto';
+import { CreateVehicleDto, UpdateVehicleDto } from './dto';
 import { VehiclesService } from './vehicles.service';
 
 @Controller('workspaces/:workspaceId/vehicles')
@@ -15,6 +25,11 @@ export class VehiclesController {
     return this.vehiclesService.getAllByWorkspaceId(workspaceId);
   }
 
+  @Get(':vehicleId')
+  async getOne(@Param('vehicleId') vehicleId: string) {
+    return this.vehiclesService.getById(vehicleId);
+  }
+
   @Post()
   @EmailVerified()
   async create(
@@ -23,5 +38,22 @@ export class VehiclesController {
     @Body() dto: CreateVehicleDto,
   ) {
     return this.vehiclesService.create(userId, workspaceId, dto);
+  }
+
+  @Patch(':vehicleId')
+  @EmailVerified()
+  async update(
+    @Param('workspaceId') workspaceId: string,
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: UpdateVehicleDto,
+  ) {
+    return this.vehiclesService.update(workspaceId, vehicleId, dto);
+  }
+
+  @Delete(':vehicleId')
+  @EmailVerified()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@Param('workspaceId') workspaceId: string, @Param('vehicleId') vehicleId: string) {
+    return this.vehiclesService.delete(workspaceId, vehicleId);
   }
 }

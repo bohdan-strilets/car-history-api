@@ -1,1 +1,1 @@
-export type { CreateVehicleInput } from './vehicle.types';
+export type { CreateVehicleInput, UpdateVehicleInput } from './vehicle.types';

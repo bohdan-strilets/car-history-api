@@ -21,3 +21,7 @@ export interface CreateVehicleInput {
   description?: string;
   countryOfOrigin?: string;
 }
+
+export type UpdateVehicleInput = Partial<
+  Omit<CreateVehicleInput, 'ownerId' | 'workspaceId' | 'registrationMileage'>
+>;
