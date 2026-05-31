@@ -1,8 +1,7 @@
-import { Vehicle } from '@prisma/client';
-
 import { VehicleResponseDto } from '../dto';
+import { VehicleWithOwner } from '../types';
 
-export const toVehicleResponse = (vehicle: Vehicle): VehicleResponseDto => ({
+export const toVehicleResponse = (vehicle: VehicleWithOwner): VehicleResponseDto => ({
   id: vehicle.id,
   ownerId: vehicle.ownerId,
   workspaceId: vehicle.workspaceId,
@@ -23,5 +22,6 @@ export const toVehicleResponse = (vehicle: Vehicle): VehicleResponseDto => ({
   description: vehicle.description,
   countryOfOrigin: vehicle.countryOfOrigin,
   status: vehicle.status,
+  owner: vehicle.owner,
   createdAt: vehicle.createdAt,
 });

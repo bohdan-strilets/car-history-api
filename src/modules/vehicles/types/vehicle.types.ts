@@ -1,4 +1,4 @@
-import { BodyType, DriveType, FuelType, Transmission } from '@prisma/client';
+import { BodyType, DriveType, FuelType, Transmission, Vehicle } from '@prisma/client';
 
 export interface CreateVehicleInput {
   ownerId: string;
@@ -25,3 +25,14 @@ export interface CreateVehicleInput {
 export type UpdateVehicleInput = Partial<
   Omit<CreateVehicleInput, 'ownerId' | 'workspaceId' | 'registrationMileage'>
 >;
+
+export type VehicleUserInfo = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+};
+
+export type VehicleWithOwner = Vehicle & {
+  owner: VehicleUserInfo;
+};

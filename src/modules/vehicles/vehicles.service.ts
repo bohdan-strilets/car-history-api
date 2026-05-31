@@ -1,9 +1,9 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Injectable } from '@nestjs/common';
-import { Vehicle } from '@prisma/client';
 
 import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from './dto';
 import { toVehicleResponse } from './mappers';
+import { VehicleWithOwner } from './types';
 import { VehiclesRepo } from './vehicles.repository';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class VehiclesService {
 
   // ─── Queries ──────────────────────────────────────────────────────────────
 
-  async getById(vehicleId: string): Promise<Vehicle> {
+  async getById(vehicleId: string): Promise<VehicleWithOwner> {
     const vehicle = await this.vehiclesRepo.findById(vehicleId);
     if (!vehicle) throw new NotFoundException(ErrorCodes.Vehicle.NOT_FOUND);
     return vehicle;
