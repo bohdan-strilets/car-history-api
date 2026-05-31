@@ -1,5 +1,5 @@
 import { VehicleResponseDto } from '../dto';
-import { VehicleWithOwner } from '../types';
+import { VehiclePurchaseInfo, VehicleSaleInfo, VehicleSpecs, VehicleWithOwner } from '../types';
 
 export const toVehicleResponse = (vehicle: VehicleWithOwner): VehicleResponseDto => ({
   id: vehicle.id,
@@ -23,5 +23,8 @@ export const toVehicleResponse = (vehicle: VehicleWithOwner): VehicleResponseDto
   countryOfOrigin: vehicle.countryOfOrigin,
   status: vehicle.status,
   owner: vehicle.owner,
+  purchaseInfo: vehicle.purchaseInfo as VehiclePurchaseInfo | null,
+  saleInfo: vehicle.saleInfo as VehicleSaleInfo | null,
+  specs: vehicle.specs as VehicleSpecs | null,
   createdAt: vehicle.createdAt,
 });

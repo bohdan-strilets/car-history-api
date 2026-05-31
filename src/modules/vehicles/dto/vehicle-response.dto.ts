@@ -1,6 +1,6 @@
 import { BodyType, DriveType, FuelType, Transmission, VehicleStatus } from '@prisma/client';
 
-import { VehicleUserInfo } from '../types';
+import { VehiclePurchaseInfo, VehicleSaleInfo, VehicleSpecs, VehicleUserInfo } from '../types';
 
 export class VehicleResponseDto {
   declare id: string;
@@ -24,5 +24,8 @@ export class VehicleResponseDto {
   declare countryOfOrigin: string | null;
   declare status: VehicleStatus;
   declare owner: VehicleUserInfo;
+  declare purchaseInfo: VehiclePurchaseInfo | null;
+  declare saleInfo: VehicleSaleInfo | null;
+  declare specs: VehicleSpecs | null;
   declare createdAt: Date;
 }
