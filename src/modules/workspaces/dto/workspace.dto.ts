@@ -48,6 +48,7 @@ export class WorkspaceResponseDto {
   declare type: WorkspaceType;
   declare role: Role;
   declare membersCount: number;
+  declare vehiclesCount: number;
   declare createdAt: Date;
   declare updatedAt: Date;
 }

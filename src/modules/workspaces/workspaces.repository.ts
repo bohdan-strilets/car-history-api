@@ -33,9 +33,7 @@ export class WorkspacesRepo {
           where: { userId },
           select: { role: true },
         },
-        _count: {
-          select: { members: true },
-        },
+        _count: { select: { members: true, vehicles: true } },
       },
     });
   }
@@ -50,7 +48,7 @@ export class WorkspacesRepo {
       where: { id: workspaceId, deletedAt: null },
       include: {
         owner: { select: workspaceUserInfoSelect },
-        _count: { select: { members: true } },
+        _count: { select: { members: true, vehicles: true } },
       },
     });
   }

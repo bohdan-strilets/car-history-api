@@ -10,6 +10,7 @@ export const toWorkspaceResponse = (workspace: WorkspaceWithMeta): WorkspaceResp
   type: workspace.type,
   role: workspace.members[0].role,
   membersCount: workspace._count.members,
+  vehiclesCount: workspace._count.vehicles,
   createdAt: workspace.createdAt,
   updatedAt: workspace.updatedAt,
 });
@@ -24,6 +25,7 @@ export const toWorkspaceWithOwnerResponse = (
   type: workspace.type,
   role,
   membersCount: workspace._count.members,
+  vehiclesCount: workspace._count.vehicles,
   createdAt: workspace.createdAt,
   updatedAt: workspace.updatedAt,
   owner: workspace.owner,

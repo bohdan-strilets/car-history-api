@@ -27,10 +27,10 @@ export interface WorkspaceInfo {
 
 export interface WorkspaceWithOwner extends Workspace {
   owner: WorkspaceUserInfo;
-  _count: { members: number };
+  _count: { members: number; vehicles: number };
 }
 
 export interface WorkspaceWithMeta extends Workspace {
   members: { role: Role }[];
-  _count: { members: number };
+  _count: { members: number; vehicles: number };
 }
