@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
@@ -27,9 +28,9 @@ export class VehiclesRepo {
   async create(input: CreateVehicleInput, tx?: PrismaTxClient): Promise<VehicleWithOwner> {
     const client = tx ?? this.prisma;
     return client.vehicle.create({
-      data: input,
+      data: input as Prisma.VehicleUncheckedCreateInput,
       include: { owner: { select: vehicleUserInfoSelect } },
-    });
+    }) as unknown as Promise<VehicleWithOwner>;
   }
 
   async update(
@@ -40,9 +41,9 @@ export class VehiclesRepo {
     const client = tx ?? this.prisma;
     return client.vehicle.update({
       where: { id: vehicleId },
-      data,
+      data: data as Prisma.VehicleUpdateInput,
       include: { owner: { select: vehicleUserInfoSelect } },
-    });
+    }) as Promise<VehicleWithOwner>;
   }
 
   async softDelete(vehicleId: string, tx?: PrismaTxClient): Promise<VehicleWithOwner> {
