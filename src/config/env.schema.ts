@@ -8,6 +8,7 @@ export const envSchema = z.object({
 
   DATABASE_URL: z.string(),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  SITE_NAME: z.string().default('Arvino'),
 
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(14).default(12),
   TOKEN_BYTES: z.coerce.number().int().min(32).max(64).default(32),
@@ -29,6 +30,11 @@ export const envSchema = z.object({
 
   PASSWORD_RESET_EXPIRES_IN_MINUTES: z.coerce.number().int().default(60),
   EMAIL_VERIFY_EXPIRES_IN_MINUTES: z.coerce.number().int().default(1440),
+
+  OPENROUTER_API_KEY: z.string(),
+  OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_DEFAULT_MODEL: z.string().default('anthropic/claude-3-haiku'),
+  OPENROUTER_MAX_TOKENS: z.coerce.number().int().default(1000),
 });
 
 export type Env = z.infer<typeof envSchema>;

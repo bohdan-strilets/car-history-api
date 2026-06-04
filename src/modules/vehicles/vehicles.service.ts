@@ -1,14 +1,18 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { AiService } from '@modules/ai';
 import { Injectable } from '@nestjs/common';
 
 import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from './dto';
 import { toVehicleResponse } from './mappers';
-import { VehicleWithOwner } from './types';
+import { VehicleSpecs, VehicleWithOwner } from './types';
 import { VehiclesRepo } from './vehicles.repository';
 
 @Injectable()
 export class VehiclesService {
-  constructor(private readonly vehiclesRepo: VehiclesRepo) {}
+  constructor(
+    private readonly vehiclesRepo: VehiclesRepo,
+    private readonly aiService: AiService,
+  ) {}
 
   // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -66,5 +70,28 @@ export class VehiclesService {
     }
 
     await this.vehiclesRepo.softDelete(vehicleId);
+  }
+
+  async fillSpecsWithAi(workspaceId: string, vehicleId: string): Promise<VehicleResponseDto> {
+    const vehicle = await this.getById(vehicleId);
+
+    if (vehicle.workspaceId !== workspaceId) {
+      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
+    }
+
+    const specs = await this.aiService.fillVehicleSpecs({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      generation: vehicle.generation,
+      engineDisplacementCc: vehicle.engineDisplacementCc,
+      fuelType: vehicle.fuelType,
+    });
+
+    const updated = await this.vehiclesRepo.update(vehicleId, {
+      specs: specs as VehicleSpecs,
+    });
+
+    return toVehicleResponse(updated);
   }
 }

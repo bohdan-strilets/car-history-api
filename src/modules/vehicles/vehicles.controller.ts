@@ -56,4 +56,13 @@ export class VehiclesController {
   async delete(@Param('workspaceId') workspaceId: string, @Param('vehicleId') vehicleId: string) {
     return this.vehiclesService.delete(workspaceId, vehicleId);
   }
+
+  @Post(':vehicleId/specs/ai')
+  @EmailVerified()
+  async fillSpecsWithAi(
+    @Param('workspaceId') workspaceId: string,
+    @Param('vehicleId') vehicleId: string,
+  ) {
+    return this.vehiclesService.fillSpecsWithAi(workspaceId, vehicleId);
+  }
 }

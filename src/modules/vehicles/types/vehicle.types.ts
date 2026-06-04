@@ -105,3 +105,14 @@ export type VehicleUserInfo = {
 export type VehicleWithOwner = Vehicle & {
   owner: VehicleUserInfo;
 };
+
+// AI Prompts
+
+export interface VehicleSpecsPromptParams {
+  brand: string;
+  model: string;
+  year: number;
+  generation?: string | null;
+  engineDisplacementCc: number;
+  fuelType: string[];
+}

@@ -1,4 +1,5 @@
 import { CryptoModule } from '@common/crypto';
+import { AiModule } from '@modules/ai';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions';
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma';
     MailModule,
     WorkspacesModule,
     VehiclesModule,
+    AiModule,
   ],
 })
 export class AppModule {}

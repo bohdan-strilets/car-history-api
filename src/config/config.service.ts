@@ -27,6 +27,10 @@ export class AppConfigService {
     return this.config.get('FRONTEND_URL', { infer: true });
   }
 
+  get siteName() {
+    return this.config.get('SITE_NAME', { infer: true });
+  }
+
   get isDevelopment() {
     return this.nodeEnv === 'development';
   }
@@ -93,5 +97,21 @@ export class AppConfigService {
 
   get emailVerifyExpiresInMinutes() {
     return this.config.get('EMAIL_VERIFY_EXPIRES_IN_MINUTES', { infer: true });
+  }
+
+  get openRouterApiKey() {
+    return this.config.get('OPENROUTER_API_KEY', { infer: true });
+  }
+
+  get openRouterBaseUrl() {
+    return this.config.get('OPENROUTER_BASE_URL', { infer: true });
+  }
+
+  get openRouterDefaultModel() {
+    return this.config.get('OPENROUTER_DEFAULT_MODEL', { infer: true });
+  }
+
+  get openRouterMaxTokens() {
+    return this.config.get('OPENROUTER_MAX_TOKENS', { infer: true });
   }
 }
