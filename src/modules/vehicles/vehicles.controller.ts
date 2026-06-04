@@ -11,7 +11,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { CreateVehicleDto, UpdateVehicleDto } from './dto';
+import { CreateVehicleDto, UpdateVehicleDto, UpdateVehicleSpecsDto } from './dto';
 import { VehiclesService } from './vehicles.service';
 
 @Controller('workspaces/:workspaceId/vehicles')
@@ -48,6 +48,16 @@ export class VehiclesController {
     @Body() dto: UpdateVehicleDto,
   ) {
     return this.vehiclesService.update(workspaceId, vehicleId, dto);
+  }
+
+  @Patch(':vehicleId/specs')
+  @EmailVerified()
+  async updateSpecs(
+    @Param('workspaceId') workspaceId: string,
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: UpdateVehicleSpecsDto,
+  ) {
+    return this.vehiclesService.updateSpecs(workspaceId, vehicleId, dto);
   }
 
   @Delete(':vehicleId')

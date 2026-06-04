@@ -2,7 +2,12 @@ import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/excep
 import { AiService } from '@modules/ai';
 import { Injectable } from '@nestjs/common';
 
-import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from './dto';
+import {
+  CreateVehicleDto,
+  UpdateVehicleDto,
+  UpdateVehicleSpecsDto,
+  VehicleResponseDto,
+} from './dto';
 import { toVehicleResponse } from './mappers';
 import { VehicleSpecs, VehicleWithOwner } from './types';
 import { VehiclesRepo } from './vehicles.repository';
@@ -59,6 +64,24 @@ export class VehiclesService {
     }
 
     const updated = await this.vehiclesRepo.update(vehicleId, dto);
+    return toVehicleResponse(updated);
+  }
+
+  async updateSpecs(
+    workspaceId: string,
+    vehicleId: string,
+    dto: UpdateVehicleSpecsDto,
+  ): Promise<VehicleResponseDto> {
+    const vehicle = await this.getById(vehicleId);
+
+    if (vehicle.workspaceId !== workspaceId) {
+      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
+    }
+
+    const updated = await this.vehiclesRepo.update(vehicleId, {
+      specs: dto as VehicleSpecs,
+    });
+
     return toVehicleResponse(updated);
   }
 
