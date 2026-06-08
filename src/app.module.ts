@@ -3,6 +3,7 @@ import { AiModule } from '@modules/ai';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions';
+import { TimelineModule } from '@modules/timeline';
 import { TokensModule } from '@modules/tokens';
 import { UsersModule } from '@modules/users';
 import { VehiclesModule } from '@modules/vehicles';
@@ -24,6 +25,7 @@ import { PrismaModule } from './prisma';
     MailModule,
     WorkspacesModule,
     VehiclesModule,
+    TimelineModule,
     AiModule,
   ],
 })
