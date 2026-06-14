@@ -1,4 +1,5 @@
 import { ErrorCodes } from '@common/exceptions';
+import { MilestonesService } from '@modules/milestones';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TimelineType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
@@ -9,7 +10,10 @@ import { CreateTimelineEventInput } from './types';
 
 @Injectable()
 export class TimelineService {
-  constructor(private readonly timelineRepository: TimelineRepository) {}
+  constructor(
+    private readonly timelineRepository: TimelineRepository,
+    private readonly milestonesService: MilestonesService,
+  ) {}
 
   // ─── Queries ───────────────────────────────────────────────────────────────
 
@@ -29,11 +33,21 @@ export class TimelineService {
 
   // ─── Commands ──────────────────────────────────────────────────────────────
 
-  async createEvent(vehicleId: string, dto: CreateTimelineEventDto) {
+  async createEvent(vehicleId: string, dto: CreateTimelineEventDto, userId: string) {
     const data = this.buildCreateData(vehicleId, dto);
     const event = await this.timelineRepository.create(data);
 
     await this.timelineRepository.createMileageLog(vehicleId, event.id, dto.mileage, dto.type);
+
+    await this.milestonesService
+      .checkAndAward({
+        userId,
+        vehicleId,
+        eventType: dto.type,
+        mileage: dto.mileage,
+        cost: dto.cost ? Number(dto.cost) : undefined,
+      })
+      .catch((err) => console.error('❌ checkAndAward error:', err));
 
     return event;
   }

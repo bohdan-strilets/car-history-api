@@ -1,4 +1,4 @@
-import { JwtAuthGuard, WorkspaceMemberGuard } from '@common/guards';
+import { Auth, CurrentUserId, WorkspaceMember } from '@common/decorators';
 import {
   Body,
   Controller,
@@ -10,14 +10,14 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 
 import { CreateTimelineEventDto, TimelineQueryDto, UpdateTimelineEventDto } from './dto';
 import { TimelineService } from './timeline.service';
 
 @Controller('workspaces/:workspaceId/vehicles/:vehicleId/timeline')
-@UseGuards(JwtAuthGuard, WorkspaceMemberGuard)
+@Auth()
+@WorkspaceMember()
 export class TimelineController {
   constructor(private readonly timelineService: TimelineService) {}
 
@@ -28,8 +28,12 @@ export class TimelineController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  createEvent(@Param('vehicleId') vehicleId: string, @Body() dto: CreateTimelineEventDto) {
-    return this.timelineService.createEvent(vehicleId, dto);
+  createEvent(
+    @Param('vehicleId') vehicleId: string,
+    @Body() dto: CreateTimelineEventDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.timelineService.createEvent(vehicleId, dto, userId);
   }
 
   @Get(':eventId')
