@@ -547,6 +547,7 @@ model VehicleMilestone {
   vehicleId             String
   milestoneDefinitionId String
   value                 Float
+  mileage               Int      @default(0)
   isSeen                Boolean  @default(false)
   achievedAt            DateTime
   createdAt             DateTime @default(now())

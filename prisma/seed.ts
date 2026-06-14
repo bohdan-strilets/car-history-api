@@ -178,35 +178,35 @@ async function main() {
     // FUEL
     {
       code: 'FIRST_REFUEL',
-      category: 'FUEL',
+      category: 'ACHIEVEMENT',
       title: 'First Refuel',
       description: 'First time you refueled your vehicle',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'REFUEL' },
     },
     {
       code: 'REFUEL_10',
-      category: 'FUEL',
+      category: 'ACTIVITY',
       title: '10 Refuels',
       description: 'You have refueled your vehicle 10 times',
       condition: { type: 'EVENT_COUNT', value: 10, eventType: 'REFUEL' },
     },
     {
       code: 'REFUEL_50',
-      category: 'FUEL',
+      category: 'ACTIVITY',
       title: '50 Refuels',
       description: 'You have refueled your vehicle 50 times',
       condition: { type: 'EVENT_COUNT', value: 50, eventType: 'REFUEL' },
     },
     {
       code: 'REFUEL_100',
-      category: 'FUEL',
+      category: 'ACTIVITY',
       title: '100 Refuels',
       description: 'You have refueled your vehicle 100 times',
       condition: { type: 'EVENT_COUNT', value: 100, eventType: 'REFUEL' },
     },
     {
       code: 'REFUEL_500',
-      category: 'FUEL',
+      category: 'ACTIVITY',
       title: '500 Refuels',
       description: 'You have refueled your vehicle 500 times',
       condition: { type: 'EVENT_COUNT', value: 500, eventType: 'REFUEL' },
@@ -229,42 +229,42 @@ async function main() {
     // ACTIVITY
     {
       code: 'FIRST_TIMELINE_EVENT',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Timeline Event',
       description: 'You added your first event to the timeline',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'ANY' },
     },
     {
       code: 'FIRST_SERVICE',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Service',
       description: 'You added your first service record',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'SERVICE' },
     },
     {
       code: 'FIRST_DOCUMENT',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Document',
       description: 'You added your first document',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'DOCUMENT' },
     },
     {
       code: 'FIRST_TRIP',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Trip',
       description: 'You logged your first trip',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'TRIP' },
     },
     {
       code: 'FIRST_TIRE_CHANGE',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Tire Change',
       description: 'You logged your first tire change',
       condition: { type: 'EVENT_COUNT', value: 1, eventType: 'TIRE_CHANGE' },
     },
     {
       code: 'FIRST_SERVICE_STATION',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Service Station',
       description: 'You added your first service station',
       condition: { type: 'SERVICE_STATION_COUNT', value: 1 },
@@ -299,14 +299,14 @@ async function main() {
     },
     {
       code: 'FIRST_PHOTO',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First Photo',
       description: 'You uploaded your first photo',
       condition: { type: 'MEDIA_COUNT', value: 1 },
     },
     {
       code: 'FIRST_AI_MESSAGE',
-      category: 'ACTIVITY',
+      category: 'ACHIEVEMENT',
       title: 'First AI Message',
       description: 'You sent your first message to the AI assistant',
       condition: { type: 'AI_MESSAGE_COUNT', value: 1 },
@@ -374,7 +374,7 @@ async function main() {
   for (const milestone of milestones) {
     await prisma.milestoneDefinition.upsert({
       where: { code: milestone.code },
-      update: {},
+      update: { category: milestone.category },
       create: milestone,
     });
   }
