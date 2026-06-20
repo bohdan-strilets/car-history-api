@@ -139,24 +139,34 @@ export class TimelineRepository {
     mileage: number,
     source: MileageSource,
   ): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.mileageLog.create({
-        data: { vehicleId, eventId, mileage, source },
-      }),
-      this.prisma.vehicle.update({
-        where: { id: vehicleId },
-        data: {
-          currentMileage: {
-            set: mileage,
-          },
-        },
-      }),
-    ]);
+    await this.prisma.mileageLog.create({
+      data: { vehicleId, eventId, mileage, source },
+    });
+
+    const maxLog = await this.prisma.mileageLog.findFirst({
+      where: { vehicleId },
+      orderBy: { mileage: 'desc' },
+    });
+
+    await this.prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { currentMileage: maxLog?.mileage ?? mileage },
+    });
   }
 
-  async deleteMileageLog(eventId: string): Promise<void> {
+  async deleteMileageLog(vehicleId: string, eventId: string): Promise<void> {
     await this.prisma.mileageLog.deleteMany({
       where: { eventId },
+    });
+
+    const maxLog = await this.prisma.mileageLog.findFirst({
+      where: { vehicleId },
+      orderBy: { mileage: 'desc' },
+    });
+
+    await this.prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { currentMileage: maxLog?.mileage ?? 0 },
     });
   }
 

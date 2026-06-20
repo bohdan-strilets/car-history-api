@@ -42,8 +42,12 @@ export class TimelineController {
   }
 
   @Patch(':eventId')
-  updateEvent(@Param('eventId') eventId: string, @Body() dto: UpdateTimelineEventDto) {
-    return this.timelineService.updateEvent(eventId, dto);
+  updateEvent(
+    @Param('eventId') eventId: string,
+    @Body() dto: UpdateTimelineEventDto,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.timelineService.updateEvent(eventId, dto, userId);
   }
 
   @Delete(':eventId')

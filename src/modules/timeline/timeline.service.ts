@@ -52,7 +52,7 @@ export class TimelineService {
     return event;
   }
 
-  async updateEvent(eventId: string, dto: UpdateTimelineEventDto) {
+  async updateEvent(eventId: string, dto: UpdateTimelineEventDto, userId: string) {
     const event = await this.timelineRepository.findById(eventId);
 
     if (!event) {
@@ -72,6 +72,16 @@ export class TimelineService {
       await this.timelineRepository.updateMileageLog(event.vehicleId, eventId, dto.mileage);
     }
 
+    await this.milestonesService
+      .checkAndAward({
+        userId,
+        vehicleId: event.vehicleId,
+        eventType: event.type,
+        mileage: dto.mileage ?? event.mileage,
+        cost: dto.cost != null ? Number(dto.cost) : undefined,
+      })
+      .catch((err) => console.error('❌ checkAndAward error:', err));
+
     return updated;
   }
 
@@ -84,7 +94,7 @@ export class TimelineService {
 
     await Promise.all([
       this.timelineRepository.softDelete(eventId),
-      this.timelineRepository.deleteMileageLog(eventId),
+      this.timelineRepository.deleteMileageLog(event.vehicleId, eventId),
     ]);
   }
 
