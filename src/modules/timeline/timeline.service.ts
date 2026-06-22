@@ -1,5 +1,6 @@
 import { ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
+import { RemindersService } from '@modules/reminders';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TimelineType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
@@ -13,6 +14,7 @@ export class TimelineService {
   constructor(
     private readonly timelineRepository: TimelineRepository,
     private readonly milestonesService: MilestonesService,
+    private readonly remindersService: RemindersService,
   ) {}
 
   // ─── Queries ───────────────────────────────────────────────────────────────
@@ -23,11 +25,7 @@ export class TimelineService {
 
   async getEvent(eventId: string) {
     const event = await this.timelineRepository.findById(eventId);
-
-    if (!event) {
-      throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
-    }
-
+    if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
     return event;
   }
 
@@ -38,6 +36,19 @@ export class TimelineService {
     const event = await this.timelineRepository.create(data);
 
     await this.timelineRepository.createMileageLog(vehicleId, event.id, dto.mileage, dto.type);
+
+    if (dto.type === TimelineType.DOCUMENT) {
+      const raw = await this.timelineRepository.findRawById(event.id);
+      if (raw?.document) {
+        await this.remindersService.syncFromDocument({
+          vehicleId,
+          documentId: raw.document.id,
+          documentType: raw.document.type,
+          expireDate: raw.document.expireDate,
+          title: event.title,
+        });
+      }
+    }
 
     await this.milestonesService
       .checkAndAward({
@@ -54,10 +65,7 @@ export class TimelineService {
 
   async updateEvent(eventId: string, dto: UpdateTimelineEventDto, userId: string) {
     const event = await this.timelineRepository.findById(eventId);
-
-    if (!event) {
-      throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
-    }
+    if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
 
     const updated = await this.timelineRepository.update(eventId, {
       title: dto.title,
@@ -70,6 +78,19 @@ export class TimelineService {
 
     if (dto.mileage !== undefined && dto.mileage !== event.mileage) {
       await this.timelineRepository.updateMileageLog(event.vehicleId, eventId, dto.mileage);
+    }
+
+    if (event.type === TimelineType.DOCUMENT) {
+      const raw = await this.timelineRepository.findRawById(eventId);
+      if (raw?.document) {
+        await this.remindersService.syncFromDocument({
+          vehicleId: event.vehicleId,
+          documentId: raw.document.id,
+          documentType: raw.document.type,
+          expireDate: raw.document.expireDate,
+          title: updated.title,
+        });
+      }
     }
 
     await this.milestonesService
@@ -87,9 +108,13 @@ export class TimelineService {
 
   async deleteEvent(eventId: string) {
     const event = await this.timelineRepository.findById(eventId);
+    if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
 
-    if (!event) {
-      throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
+    if (event.type === TimelineType.DOCUMENT) {
+      const raw = await this.timelineRepository.findRawById(eventId);
+      if (raw?.document) {
+        await this.remindersService.deleteByDocumentId(raw.document.id);
+      }
     }
 
     await Promise.all([

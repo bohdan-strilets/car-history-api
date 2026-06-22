@@ -1,4 +1,5 @@
 import { MilestonesModule } from '@modules/milestones';
+import { RemindersModule } from '@modules/reminders';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
 
@@ -7,7 +8,7 @@ import { TimelineRepository } from './timeline.repository';
 import { TimelineService } from './timeline.service';
 
 @Module({
-  imports: [PrismaModule, MilestonesModule],
+  imports: [PrismaModule, MilestonesModule, RemindersModule],
   controllers: [TimelineController],
   providers: [TimelineService, TimelineRepository],
   exports: [TimelineService],

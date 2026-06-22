@@ -6,7 +6,12 @@ import { PrismaService } from '@prisma/prisma.service';
 import { TimelineQueryDto } from './dto';
 import { mapTimelineEvent } from './mappers';
 import { timelineEventInclude } from './selects';
-import { CreateTimelineEventInput, MappedTimelineEvent, UpdateTimelineEventInput } from './types';
+import {
+  CreateTimelineEventInput,
+  MappedTimelineEvent,
+  TimelineEventWithRelations,
+  UpdateTimelineEventInput,
+} from './types';
 
 @Injectable()
 export class TimelineRepository {
@@ -177,5 +182,12 @@ export class TimelineRepository {
     });
 
     return vehicle?.currentMileage ?? 0;
+  }
+
+  async findRawById(eventId: string): Promise<TimelineEventWithRelations | null> {
+    return this.prisma.timelineEvent.findUnique({
+      where: { id: eventId, deletedAt: null },
+      include: timelineEventInclude,
+    });
   }
 }
