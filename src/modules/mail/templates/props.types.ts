@@ -80,3 +80,11 @@ export interface WorkspaceInviteProps {
   role: string;
   inviteUrl: string;
 }
+
+export interface ReminderNotificationProps {
+  firstName: string;
+  reminderTitle: string;
+  dueDate: string;
+  daysLeft: number;
+  vehicleName: string;
+}

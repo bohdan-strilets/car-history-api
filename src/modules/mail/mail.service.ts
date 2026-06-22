@@ -10,6 +10,7 @@ import {
   MailParams,
   NewDeviceLoginParams,
   PasswordChangedParams,
+  ReminderNotificationParams,
   ResetPasswordParams,
   WelcomeParams,
   WorkspaceInviteParams,
@@ -20,6 +21,7 @@ import {
   EmailChangedTemplate,
   NewDeviceLoginTemplate,
   PasswordChangedTemplate,
+  ReminderNotificationTemplate,
   ResetPasswordTemplate,
   WelcomeTemplate,
   WorkspaceInviteTemplate,
@@ -137,6 +139,29 @@ export class MailService {
       WorkspaceInviteTemplate({ firstName, invitedByName, workspaceName, role, inviteUrl }),
     );
     const subject = `Zaproszenie do workspace ${workspaceName} — Arvino`;
+    await this.send({ to, subject, html });
+  }
+
+  // ─── Reminders ───────────────────────────────────────────────────────────
+
+  async sendReminderNotification({
+    to,
+    firstName,
+    reminderTitle,
+    dueDate,
+    daysLeft,
+    vehicleName,
+  }: ReminderNotificationParams): Promise<void> {
+    const html = await render(
+      ReminderNotificationTemplate({
+        firstName,
+        reminderTitle,
+        dueDate,
+        daysLeft,
+        vehicleName,
+      }),
+    );
+    const subject = `Przypomnienie: ${reminderTitle} — Arvino`;
     await this.send({ to, subject, html });
   }
 }

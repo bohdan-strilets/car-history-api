@@ -51,3 +51,10 @@ export interface WorkspaceInviteParams extends BaseTemplateParams {
   role: string;
   inviteUrl: string;
 }
+
+export interface ReminderNotificationParams extends BaseTemplateParams {
+  reminderTitle: string;
+  dueDate: string;
+  daysLeft: number;
+  vehicleName: string;
+}
