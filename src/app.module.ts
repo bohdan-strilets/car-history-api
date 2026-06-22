@@ -4,6 +4,7 @@ import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { MaintenanceIntervalsModule } from '@modules/maintenance-intervals';
 import { MilestonesModule } from '@modules/milestones';
+import { RemindersModule } from '@modules/reminders';
 import { SessionsModule } from '@modules/sessions';
 import { TimelineModule } from '@modules/timeline';
 import { TokensModule } from '@modules/tokens';
@@ -30,6 +31,7 @@ import { PrismaModule } from './prisma';
     TimelineModule,
     MilestonesModule,
     MaintenanceIntervalsModule,
+    RemindersModule,
     AiModule,
   ],
 })
