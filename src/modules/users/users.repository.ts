@@ -3,7 +3,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
-import { CreateUserInput, UpdateStatusInput } from './types';
+import { CreateUserInput, UpdateStatusInput, UpdateUserInput } from './types';
 
 @Injectable()
 export class UsersRepo {
@@ -50,6 +50,20 @@ export class UsersRepo {
         emailVerified: true,
         emailVerifiedAt: new Date(),
       },
+    });
+  }
+
+  async update(userId: string, data: UpdateUserInput): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
+
+  async completeOnboarding(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { onboardingCompleted: true },
     });
   }
 }

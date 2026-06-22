@@ -1,0 +1,30 @@
+import { VehicleResponseDto } from '../dto';
+import { VehiclePurchaseInfo, VehicleSaleInfo, VehicleSpecs, VehicleWithOwner } from '../types';
+
+export const toVehicleResponse = (vehicle: VehicleWithOwner): VehicleResponseDto => ({
+  id: vehicle.id,
+  ownerId: vehicle.ownerId,
+  workspaceId: vehicle.workspaceId,
+  brand: vehicle.brand,
+  model: vehicle.model,
+  year: vehicle.year,
+  generation: vehicle.generation,
+  nickname: vehicle.nickname,
+  vin: vehicle.vin,
+  plateNumber: vehicle.plateNumber,
+  engineDisplacementCc: vehicle.engineDisplacementCc,
+  bodyType: vehicle.bodyType,
+  fuelType: vehicle.fuelType,
+  transmission: vehicle.transmission,
+  driveType: vehicle.driveType,
+  color: vehicle.color,
+  currentMileage: vehicle.currentMileage,
+  description: vehicle.description,
+  countryOfOrigin: vehicle.countryOfOrigin,
+  status: vehicle.status,
+  owner: vehicle.owner,
+  purchaseInfo: vehicle.purchaseInfo as VehiclePurchaseInfo | null,
+  saleInfo: vehicle.saleInfo as VehicleSaleInfo | null,
+  specs: vehicle.specs as VehicleSpecs | null,
+  createdAt: vehicle.createdAt,
+});

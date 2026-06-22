@@ -1,0 +1,4 @@
+import { JwtAuthGuard, WorkspaceMemberGuard } from '@common/guards';
+import { applyDecorators, UseGuards } from '@nestjs/common';
+
+export const WorkspaceMember = () => applyDecorators(UseGuards(JwtAuthGuard, WorkspaceMemberGuard));

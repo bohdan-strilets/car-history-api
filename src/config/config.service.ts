@@ -27,6 +27,10 @@ export class AppConfigService {
     return this.config.get('FRONTEND_URL', { infer: true });
   }
 
+  get siteName() {
+    return this.config.get('SITE_NAME', { infer: true });
+  }
+
   get isDevelopment() {
     return this.nodeEnv === 'development';
   }
@@ -65,5 +69,49 @@ export class AppConfigService {
 
   get lockDurationMinutes() {
     return this.config.get('LOCK_DURATION_MINUTES', { infer: true });
+  }
+
+  get googleClientId() {
+    return this.config.get('GOOGLE_CLIENT_ID', { infer: true });
+  }
+
+  get googleClientSecret() {
+    return this.config.get('GOOGLE_CLIENT_SECRET', { infer: true });
+  }
+
+  get googleCallbackUrl() {
+    return this.config.get('GOOGLE_CALLBACK_URL', { infer: true });
+  }
+
+  get resendApiKey() {
+    return this.config.get('RESEND_API_KEY', { infer: true });
+  }
+
+  get mailFrom() {
+    return this.config.get('MAIL_FROM', { infer: true });
+  }
+
+  get passwordResetExpiresInMinutes() {
+    return this.config.get('PASSWORD_RESET_EXPIRES_IN_MINUTES', { infer: true });
+  }
+
+  get emailVerifyExpiresInMinutes() {
+    return this.config.get('EMAIL_VERIFY_EXPIRES_IN_MINUTES', { infer: true });
+  }
+
+  get openRouterApiKey() {
+    return this.config.get('OPENROUTER_API_KEY', { infer: true });
+  }
+
+  get openRouterBaseUrl() {
+    return this.config.get('OPENROUTER_BASE_URL', { infer: true });
+  }
+
+  get openRouterDefaultModel() {
+    return this.config.get('OPENROUTER_DEFAULT_MODEL', { infer: true });
+  }
+
+  get openRouterMaxTokens() {
+    return this.config.get('OPENROUTER_MAX_TOKENS', { infer: true });
   }
 }

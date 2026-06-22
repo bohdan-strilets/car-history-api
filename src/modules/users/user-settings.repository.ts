@@ -3,6 +3,8 @@ import { UserSettings } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
+import { UpdateUserSettingsInput } from './types';
+
 @Injectable()
 export class UserSettingsRepo {
   constructor(private readonly prisma: PrismaService) {}
@@ -15,5 +17,17 @@ export class UserSettingsRepo {
   async findByUserId(userId: string, tx?: PrismaTxClient): Promise<UserSettings | null> {
     const client = tx ?? this.prisma;
     return client.userSettings.findUnique({ where: { userId } });
+  }
+
+  async update(
+    userId: string,
+    input: UpdateUserSettingsInput,
+    tx?: PrismaTxClient,
+  ): Promise<UserSettings> {
+    const client = tx ?? this.prisma;
+    return client.userSettings.update({
+      where: { userId },
+      data: input,
+    });
   }
 }

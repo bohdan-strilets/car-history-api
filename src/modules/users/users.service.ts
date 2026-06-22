@@ -9,12 +9,20 @@ import {
 import { createExpiresAt, formatEmail } from '@common/utils';
 import { AppConfigService } from '@config/config.service';
 import { Injectable } from '@nestjs/common';
-import { User, UserStatus } from '@prisma/client';
+import { User, UserSettings, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
-import { CreateGoogleUserDto, CreateUserDto } from './dto';
+import {
+  CreateGoogleUserDto,
+  CreateUserDto,
+  UpdateUserDto,
+  UpdateUserSettingsDto,
+  UserProfileResponseDto,
+  UserResponseDto,
+} from './dto';
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
+import { toUserProfileResponse, toUserResponse } from './mappers';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
 import { UserSettingsRepo } from './user-settings.repository';
 import { UsersRepo } from './users.repository';
@@ -53,6 +61,24 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const formattedEmail = formatEmail(email);
     return await this.usersRepo.findByEmail(formattedEmail);
+  }
+
+  async getProfile(userId: string): Promise<UserProfileResponseDto> {
+    const user = await this.getById(userId);
+    const settings = await this.userSettingsRepo.findByUserId(userId);
+
+    if (!settings) throw new NotFoundException(ErrorCodes.User.NOT_FOUND);
+
+    return toUserProfileResponse(user, settings);
+  }
+
+  async updateMe(userId: string, dto: UpdateUserDto): Promise<UserResponseDto> {
+    const user = await this.usersRepo.update(userId, dto);
+    return toUserResponse(user);
+  }
+
+  async completeOnboarding(userId: string): Promise<void> {
+    await this.usersRepo.completeOnboarding(userId);
   }
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -98,6 +124,8 @@ export class UsersService {
         email: formattedEmail,
         firstName: dto.firstName,
         lastName: dto.lastName,
+        avatarUrl: dto.avatarUrl,
+        emailVerified: true,
       };
 
       const user = await this.usersRepo.create(userPayload, tx);
@@ -215,6 +243,12 @@ export class UsersService {
       passwordHash,
       passwordChangedAt: new Date(),
     });
+  }
+
+  // ─── Settings ─────────────────────────────────────────────────────────────
+
+  async updateSettings(userId: string, dto: UpdateUserSettingsDto): Promise<UserSettings> {
+    return this.userSettingsRepo.update(userId, dto);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

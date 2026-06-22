@@ -18,6 +18,7 @@ model User {
   status                  UserStatus               @default(ACTIVE)
   lastLoginAt             DateTime?
   loginCount              Int                      @default(0)
+  onboardingCompleted     Boolean                  @default(false)
   deletedAt               DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -285,7 +286,7 @@ model Vehicle {
   plateNumber          String
   engineDisplacementCc Int
   bodyType             BodyType
-  fuelType             FuelType
+  fuelType             FuelType[]
   transmission         Transmission
   driveType            DriveType
   color                String
@@ -546,6 +547,7 @@ model VehicleMilestone {
   vehicleId             String
   milestoneDefinitionId String
   value                 Float
+  mileage               Int      @default(0)
   isSeen                Boolean  @default(false)
   achievedAt            DateTime
   createdAt             DateTime @default(now())
