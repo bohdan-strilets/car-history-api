@@ -1,3 +1,4 @@
+import { RemindersModule } from '@modules/reminders';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
 
@@ -6,7 +7,7 @@ import { MaintenanceIntervalsRepository } from './maintenance-intervals.reposito
 import { MaintenanceIntervalsService } from './maintenance-intervals.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RemindersModule],
   controllers: [MaintenanceIntervalsController],
   providers: [MaintenanceIntervalsService, MaintenanceIntervalsRepository],
   exports: [MaintenanceIntervalsService],

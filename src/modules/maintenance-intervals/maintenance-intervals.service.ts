@@ -1,4 +1,5 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { RemindersService } from '@modules/reminders';
 import { Injectable } from '@nestjs/common';
 import { MaintenanceInterval, MaintenanceStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -15,6 +16,7 @@ import { toMaintenanceIntervalResponse } from './mappers';
 export class MaintenanceIntervalsService {
   constructor(
     private readonly maintenanceIntervalsRepo: MaintenanceIntervalsRepository,
+    private readonly remindersService: RemindersService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -47,16 +49,24 @@ export class MaintenanceIntervalsService {
       lastServiceDate: dto.lastServiceDate ? new Date(dto.lastServiceDate) : null,
     });
 
-    const interval = await this.maintenanceIntervalsRepo.create({
-      vehicleId,
-      type: dto.type,
-      title: dto.title,
-      intervalKm: dto.intervalKm ?? null,
-      intervalMonths: dto.intervalMonths ?? null,
-      lastServiceMileage: dto.lastServiceMileage ?? null,
-      lastServiceDate: dto.lastServiceDate ? new Date(dto.lastServiceDate) : null,
-      nextServiceMileage,
-      nextServiceDate,
+    const interval = await this.prisma.$transaction(async (tx) => {
+      const created = await this.maintenanceIntervalsRepo.create(
+        {
+          vehicleId,
+          type: dto.type,
+          title: dto.title,
+          intervalKm: dto.intervalKm ?? null,
+          intervalMonths: dto.intervalMonths ?? null,
+          lastServiceMileage: dto.lastServiceMileage ?? null,
+          lastServiceDate: dto.lastServiceDate ? new Date(dto.lastServiceDate) : null,
+          nextServiceMileage,
+          nextServiceDate,
+        },
+        tx,
+      );
+
+      await this.remindersService.syncFromMaintenanceInterval(created, tx);
+      return created;
     });
 
     return toMaintenanceIntervalResponse(interval);
@@ -86,15 +96,24 @@ export class MaintenanceIntervalsService {
 
     const { nextServiceMileage, nextServiceDate } = this.calculateNext(merged);
 
-    const updated = await this.maintenanceIntervalsRepo.update(id, {
-      type: dto.type,
-      title: dto.title,
-      intervalKm: merged.intervalKm,
-      intervalMonths: merged.intervalMonths,
-      lastServiceMileage: merged.lastServiceMileage,
-      lastServiceDate: merged.lastServiceDate,
-      nextServiceMileage,
-      nextServiceDate,
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await this.maintenanceIntervalsRepo.update(
+        id,
+        {
+          type: dto.type,
+          title: dto.title,
+          intervalKm: merged.intervalKm,
+          intervalMonths: merged.intervalMonths,
+          lastServiceMileage: merged.lastServiceMileage,
+          lastServiceDate: merged.lastServiceDate,
+          nextServiceMileage,
+          nextServiceDate,
+        },
+        tx,
+      );
+
+      await this.remindersService.syncFromMaintenanceInterval(result, tx);
+      return result;
     });
 
     return toMaintenanceIntervalResponse(updated);
@@ -116,8 +135,15 @@ export class MaintenanceIntervalsService {
       throw new ForbiddenException(ErrorCodes.Maintenance.ALREADY_DISABLED);
     }
 
-    const updated = await this.maintenanceIntervalsRepo.update(id, {
-      status: MaintenanceStatus.DISABLED,
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await this.maintenanceIntervalsRepo.update(
+        id,
+        { status: MaintenanceStatus.DISABLED },
+        tx,
+      );
+
+      await this.remindersService.syncFromMaintenanceInterval(result, tx);
+      return result;
     });
 
     return toMaintenanceIntervalResponse(updated);
@@ -135,8 +161,15 @@ export class MaintenanceIntervalsService {
       throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
     }
 
-    const updated = await this.maintenanceIntervalsRepo.update(id, {
-      status: MaintenanceStatus.ACTIVE,
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await this.maintenanceIntervalsRepo.update(
+        id,
+        { status: MaintenanceStatus.ACTIVE },
+        tx,
+      );
+
+      await this.remindersService.syncFromMaintenanceInterval(result, tx);
+      return result;
     });
 
     return toMaintenanceIntervalResponse(updated);
@@ -150,7 +183,10 @@ export class MaintenanceIntervalsService {
       throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
     }
 
-    await this.maintenanceIntervalsRepo.delete(id);
+    await this.prisma.$transaction(async (tx) => {
+      await this.remindersService.deleteByMaintenanceIntervalId(id, tx);
+      await this.maintenanceIntervalsRepo.delete(id, tx);
+    });
   }
 
   async markAsDone(
@@ -175,12 +211,21 @@ export class MaintenanceIntervalsService {
       lastServiceDate: now,
     });
 
-    const updated = await this.maintenanceIntervalsRepo.update(id, {
-      lastServiceMileage: currentMileage,
-      lastServiceDate: now,
-      nextServiceMileage,
-      nextServiceDate,
-      status: MaintenanceStatus.ACTIVE,
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const result = await this.maintenanceIntervalsRepo.update(
+        id,
+        {
+          lastServiceMileage: currentMileage,
+          lastServiceDate: now,
+          nextServiceMileage,
+          nextServiceDate,
+          status: MaintenanceStatus.ACTIVE,
+        },
+        tx,
+      );
+
+      await this.remindersService.syncFromMaintenanceInterval(result, tx);
+      return result;
     });
 
     return toMaintenanceIntervalResponse(updated);
