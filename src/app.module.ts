@@ -2,6 +2,7 @@ import { CryptoModule } from '@common/crypto';
 import { AiModule } from '@modules/ai';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
+import { MaintenanceIntervalsModule } from '@modules/maintenance-intervals';
 import { MilestonesModule } from '@modules/milestones';
 import { SessionsModule } from '@modules/sessions';
 import { TimelineModule } from '@modules/timeline';
@@ -28,6 +29,7 @@ import { PrismaModule } from './prisma';
     VehiclesModule,
     TimelineModule,
     MilestonesModule,
+    MaintenanceIntervalsModule,
     AiModule,
   ],
 })
