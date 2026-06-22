@@ -4,6 +4,7 @@ import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { MaintenanceIntervalsModule } from '@modules/maintenance-intervals';
 import { MilestonesModule } from '@modules/milestones';
+import { NotificationsModule } from '@modules/notifications';
 import { RemindersModule } from '@modules/reminders';
 import { SessionsModule } from '@modules/sessions';
 import { TimelineModule } from '@modules/timeline';
@@ -12,6 +13,7 @@ import { UsersModule } from '@modules/users';
 import { VehiclesModule } from '@modules/vehicles';
 import { WorkspacesModule } from '@modules/workspaces';
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppConfigModule } from './config';
 import { PrismaModule } from './prisma';
@@ -32,6 +34,8 @@ import { PrismaModule } from './prisma';
     MilestonesModule,
     MaintenanceIntervalsModule,
     RemindersModule,
+    NotificationsModule,
+    ScheduleModule.forRoot(),
     AiModule,
   ],
 })
