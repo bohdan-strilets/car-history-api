@@ -34,7 +34,12 @@ export class MilestonesRepository {
 
   async getTotalExpenses(vehicleId: string): Promise<number> {
     const result = await this.prisma.timelineEvent.aggregate({
-      where: { vehicleId, deletedAt: null, cost: { not: null } },
+      where: {
+        vehicleId,
+        deletedAt: null,
+        cost: { not: null },
+        type: { notIn: ['PURCHASE', 'SALE'] },
+      },
       _sum: { cost: true },
     });
     return result._sum.cost?.toNumber() ?? 0;
