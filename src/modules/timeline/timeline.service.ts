@@ -50,15 +50,17 @@ export class TimelineService {
       }
     }
 
-    await this.milestonesService
-      .checkAndAward({
-        userId,
-        vehicleId,
-        eventType: dto.type,
-        mileage: dto.mileage,
-        cost: dto.cost ? Number(dto.cost) : undefined,
-      })
-      .catch((err) => console.error('❌ checkAndAward error:', err));
+    if (dto.type !== TimelineType.SALE) {
+      await this.milestonesService
+        .checkAndAward({
+          userId,
+          vehicleId,
+          eventType: dto.type,
+          mileage: dto.mileage,
+          cost: dto.cost ? Number(dto.cost) : undefined,
+        })
+        .catch((err) => console.error('❌ checkAndAward error:', err));
+    }
 
     return event;
   }
@@ -92,16 +94,6 @@ export class TimelineService {
         });
       }
     }
-
-    await this.milestonesService
-      .checkAndAward({
-        userId,
-        vehicleId: event.vehicleId,
-        eventType: event.type,
-        mileage: dto.mileage ?? event.mileage,
-        cost: dto.cost != null ? Number(dto.cost) : undefined,
-      })
-      .catch((err) => console.error('❌ checkAndAward error:', err));
 
     return updated;
   }

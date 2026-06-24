@@ -74,4 +74,28 @@ export class MilestonesRepository {
       purchaseInfo: vehicle.purchaseInfo as VehiclePurchaseInfo | null,
     };
   }
+
+  async getMileageFromLogs(vehicleId: string): Promise<number> {
+    const result = await this.prisma.mileageLog.aggregate({
+      where: {
+        vehicleId,
+        source: { notIn: ['PURCHASE', 'SALE', 'MANUAL'] },
+      },
+      _max: { mileage: true },
+    });
+    return result._max.mileage ?? 0;
+  }
+
+  async getActiveVehicles() {
+    return this.prisma.vehicle.findMany({
+      where: { status: 'ACTIVE', deletedAt: null },
+      select: {
+        id: true,
+        ownerId: true,
+        currentMileage: true,
+        registrationMileage: true,
+        purchaseInfo: true,
+      },
+    });
+  }
 }

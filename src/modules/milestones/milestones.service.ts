@@ -53,21 +53,12 @@ export class MilestonesService {
   ): Promise<MilestoneResult> {
     switch (condition.type) {
       case 'MILEAGE_SINCE_REGISTRATION': {
-        const mileageSince = vehicle.currentMileage - vehicle.registrationMileage;
+        const mileageFromLogs = await this.milestonesRepository.getMileageFromLogs(ctx.vehicleId);
+        const registrationMileage = vehicle.registrationMileage;
+        const mileageSince = mileageFromLogs - registrationMileage;
         return {
           achieved: mileageSince >= (condition.value ?? 0),
           value: condition.value ?? mileageSince,
-        };
-      }
-
-      case 'OWNERSHIP_DAYS': {
-        const purchaseInfo = vehicle.purchaseInfo as { date?: string } | null;
-        if (!purchaseInfo?.date) return { achieved: false, value: 0 };
-        const purchaseDate = new Date(purchaseInfo.date);
-        const days = Math.floor((Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-        return {
-          achieved: days >= (condition.value ?? 0),
-          value: condition.value ?? days,
         };
       }
 
@@ -100,6 +91,43 @@ export class MilestonesService {
 
       default:
         return { achieved: false, value: 0 };
+    }
+  }
+
+  // ─── Ownership Cron Check ──────────────────────────────────────────────────
+  async checkOwnershipMilestones(): Promise<void> {
+    const [definitions, vehicles] = await Promise.all([
+      this.milestonesRepository.findDefinitions(),
+      this.milestonesRepository.getActiveVehicles(),
+    ]);
+
+    const ownershipDefinitions = definitions.filter(
+      (d) => (d.condition as MilestoneCondition).type === 'OWNERSHIP_DAYS',
+    );
+
+    for (const vehicle of vehicles) {
+      const purchaseInfo = vehicle.purchaseInfo as { date?: string } | null;
+      if (!purchaseInfo?.date) continue;
+
+      const purchaseDate = new Date(purchaseInfo.date);
+      const days = Math.floor((Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      for (const definition of ownershipDefinitions) {
+        const condition = definition.condition as MilestoneCondition;
+        const already = await this.milestonesRepository.findAchieved(vehicle.id, definition.id);
+        if (already) continue;
+
+        if (days >= (condition.value ?? 0)) {
+          await this.milestonesRepository.create({
+            userId: vehicle.ownerId,
+            vehicleId: vehicle.id,
+            milestoneDefinitionId: definition.id,
+            value: condition.value ?? days,
+            mileage: vehicle.currentMileage,
+            achievedAt: new Date(),
+          });
+        }
+      }
     }
   }
 }
