@@ -1,6 +1,6 @@
 import { PaginatedData } from '@common/types';
 import { Injectable } from '@nestjs/common';
-import { MileageSource, Prisma } from '@prisma/client';
+import { MileageSource, Prisma, TimelineType } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { TimelineQueryDto } from './dto';
@@ -188,6 +188,12 @@ export class TimelineRepository {
     return this.prisma.timelineEvent.findUnique({
       where: { id: eventId, deletedAt: null },
       include: timelineEventInclude,
+    });
+  }
+
+  async countByType(vehicleId: string, type: TimelineType): Promise<number> {
+    return this.prisma.timelineEvent.count({
+      where: { vehicleId, type, deletedAt: null },
     });
   }
 }

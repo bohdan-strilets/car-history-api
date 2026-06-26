@@ -1,4 +1,4 @@
-import { ErrorCodes } from '@common/exceptions';
+import { ConflictException, ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -32,6 +32,10 @@ export class TimelineService {
   // ─── Commands ──────────────────────────────────────────────────────────────
 
   async createEvent(vehicleId: string, dto: CreateTimelineEventDto, userId: string) {
+    if (dto.type === TimelineType.PURCHASE || dto.type === TimelineType.SALE) {
+      await this.assertUniqueEventType(vehicleId, dto.type);
+    }
+
     const data = this.buildCreateData(vehicleId, dto);
     const event = await this.timelineRepository.create(data);
 
@@ -230,6 +234,14 @@ export class TimelineService {
 
       default:
         return base;
+    }
+  }
+
+  // Private Methods
+  private async assertUniqueEventType(vehicleId: string, type: TimelineType): Promise<void> {
+    const count = await this.timelineRepository.countByType(vehicleId, type);
+    if (count > 0) {
+      throw new ConflictException(ErrorCodes.Timeline.EVENT_ALREADY_EXISTS);
     }
   }
 }
