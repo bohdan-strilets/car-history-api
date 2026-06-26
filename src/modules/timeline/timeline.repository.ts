@@ -219,4 +219,12 @@ export class TimelineRepository {
       });
     }
   }
+
+  async getVehicleFuelTypes(vehicleId: string): Promise<string[]> {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: { fuelType: true },
+    });
+    return vehicle?.fuelType ?? [];
+  }
 }

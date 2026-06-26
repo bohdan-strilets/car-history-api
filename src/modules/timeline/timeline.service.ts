@@ -1,4 +1,4 @@
-import { ConflictException, ErrorCodes } from '@common/exceptions';
+import { BadRequestException, ConflictException, ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -34,6 +34,14 @@ export class TimelineService {
   async createEvent(vehicleId: string, dto: CreateTimelineEventDto, userId: string) {
     if (dto.type === TimelineType.PURCHASE || dto.type === TimelineType.SALE) {
       await this.assertUniqueEventType(vehicleId, dto.type);
+    }
+
+    if (dto.type === TimelineType.CHARGE) {
+      const fuelTypes = await this.timelineRepository.getVehicleFuelTypes(vehicleId);
+      const isChargeable = fuelTypes.includes('ELECTRIC') || fuelTypes.includes('HYBRID');
+      if (!isChargeable) {
+        throw new BadRequestException(ErrorCodes.Timeline.CHARGE_NOT_SUPPORTED);
+      }
     }
 
     const data = this.buildCreateData(vehicleId, dto);
