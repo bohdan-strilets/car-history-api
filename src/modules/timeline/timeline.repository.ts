@@ -196,4 +196,27 @@ export class TimelineRepository {
       where: { vehicleId, type, deletedAt: null },
     });
   }
+
+  async syncVehicleInfoFromEvent(
+    vehicleId: string,
+    type: TimelineType,
+    data: { date?: Date; price?: number; mileage?: number } | null,
+  ): Promise<void> {
+    if (type === TimelineType.PURCHASE) {
+      await this.prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { purchaseInfo: data ?? Prisma.JsonNull },
+      });
+    }
+
+    if (type === TimelineType.SALE) {
+      await this.prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: {
+          saleInfo: data ?? Prisma.JsonNull,
+          status: data ? 'ARCHIVE' : 'ACTIVE',
+        },
+      });
+    }
+  }
 }

@@ -41,6 +41,14 @@ export class TimelineService {
 
     await this.timelineRepository.createMileageLog(vehicleId, event.id, dto.mileage, dto.type);
 
+    if (dto.type === TimelineType.PURCHASE || dto.type === TimelineType.SALE) {
+      await this.timelineRepository.syncVehicleInfoFromEvent(vehicleId, dto.type, {
+        date: new Date(dto.eventDate),
+        price: dto.cost ? Number(dto.cost) : undefined,
+        mileage: dto.mileage,
+      });
+    }
+
     if (dto.type === TimelineType.DOCUMENT) {
       const raw = await this.timelineRepository.findRawById(event.id);
       if (raw?.document) {
@@ -117,6 +125,10 @@ export class TimelineService {
       this.timelineRepository.softDelete(eventId),
       this.timelineRepository.deleteMileageLog(event.vehicleId, eventId),
     ]);
+
+    if (event.type === TimelineType.PURCHASE || event.type === TimelineType.SALE) {
+      await this.timelineRepository.syncVehicleInfoFromEvent(event.vehicleId, event.type, null);
+    }
   }
 
   // ─── Builder ───────────────────────────────────────────────────────────────
