@@ -18,62 +18,70 @@ export class NotificationsCron {
   async handleReminderNotifications(): Promise<void> {
     this.logger.log('⏰ Running reminder notifications cron...');
 
-    const now = new Date();
-    const maxDays = Math.max(...REMINDER_THRESHOLD_DAYS);
+    try {
+      const now = new Date();
+      const maxDays = Math.max(...REMINDER_THRESHOLD_DAYS);
 
-    const maxDate = new Date(now);
-    maxDate.setDate(maxDate.getDate() + maxDays);
+      const maxDate = new Date(now);
+      maxDate.setDate(maxDate.getDate() + maxDays);
 
-    const reminders = await this.prisma.reminder.findMany({
-      where: {
-        status: ReminderStatus.ACTIVE,
-        dueDate: { gte: now, lte: maxDate },
-      },
-      include: {
-        vehicle: {
-          select: {
-            brand: true,
-            model: true,
-            year: true,
-            ownerId: true,
-            owner: {
-              select: {
-                id: true,
-                email: true,
-                firstName: true,
-                userSettings: { select: { notificationsEmail: true } },
+      const reminders = await this.prisma.reminder.findMany({
+        where: {
+          status: ReminderStatus.ACTIVE,
+          dueDate: { gte: now, lte: maxDate },
+        },
+        include: {
+          vehicle: {
+            select: {
+              brand: true,
+              model: true,
+              year: true,
+              ownerId: true,
+              owner: {
+                select: {
+                  id: true,
+                  email: true,
+                  firstName: true,
+                  userSettings: { select: { notificationsEmail: true } },
+                },
               },
             },
           },
+          notifications: { select: { createdAt: true, channel: true } },
         },
-        notifications: { select: { createdAt: true, channel: true } },
-      },
-    });
-
-    this.logger.log(`Found ${reminders.length} active reminders to check`);
-
-    for (const reminder of reminders) {
-      if (!reminder.dueDate) continue;
-
-      const daysLeft = Math.ceil(
-        (reminder.dueDate.getTime() - now.getTime()) / TIME_UNITS.MILLISECONDS_PER_DAY,
-      );
-
-      if (!REMINDER_THRESHOLD_DAYS.includes(daysLeft)) continue;
-
-      const alreadySentToday = reminder.notifications.some((n) => {
-        const sentDate = new Date(n.createdAt);
-        return (
-          n.channel === NotificationChannel.EMAIL && sentDate.toDateString() === now.toDateString()
-        );
       });
 
-      if (alreadySentToday) continue;
+      this.logger.log(`Found ${reminders.length} active reminders to check`);
 
-      await this.sendEmailNotification(reminder, daysLeft, now);
+      for (const reminder of reminders) {
+        if (!reminder.dueDate) continue;
+
+        const daysLeft = Math.ceil(
+          (reminder.dueDate.getTime() - now.getTime()) / TIME_UNITS.MILLISECONDS_PER_DAY,
+        );
+
+        if (!REMINDER_THRESHOLD_DAYS.includes(daysLeft)) continue;
+
+        const alreadySentToday = reminder.notifications.some((n) => {
+          const sentDate = new Date(n.createdAt);
+          return (
+            n.channel === NotificationChannel.EMAIL &&
+            sentDate.toDateString() === now.toDateString()
+          );
+        });
+
+        if (alreadySentToday) continue;
+
+        await this.sendEmailNotification(reminder, daysLeft, now);
+      }
+
+      this.logger.log('✅ Reminder notifications cron completed');
+    } catch (error) {
+      this.logger.error(
+        `❌ Reminder notifications cron failed: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
-
-    this.logger.log('✅ Reminder notifications cron completed');
   }
 
   private async sendEmailNotification(
@@ -97,45 +105,59 @@ export class NotificationsCron {
     daysLeft: number,
     now: Date,
   ): Promise<void> {
-    const user = reminder.vehicle.owner;
-
-    if (!user || !user.userSettings?.notificationsEmail) return;
-
-    const vehicleName = `${reminder.vehicle.brand} ${reminder.vehicle.model} ${reminder.vehicle.year}`;
-    const dueDate = reminder.dueDate!.toLocaleDateString('pl-PL');
-
-    const notification = await this.prisma.notification.create({
-      data: {
-        reminderId: reminder.id,
-        channel: NotificationChannel.EMAIL,
-        status: NotificationStatus.PENDING,
-      },
-    });
-
     try {
-      await this.mailService.sendReminderNotification({
-        to: user.email,
-        firstName: user.firstName,
-        reminderTitle: reminder.title,
-        dueDate,
-        daysLeft,
-        vehicleName,
+      const user = reminder.vehicle.owner;
+
+      if (!user || !user.userSettings?.notificationsEmail) return;
+
+      const vehicleName = `${reminder.vehicle.brand} ${reminder.vehicle.model} ${reminder.vehicle.year}`;
+      const dueDate = reminder.dueDate!.toLocaleDateString('pl-PL');
+
+      const notification = await this.prisma.notification.create({
+        data: {
+          reminderId: reminder.id,
+          channel: NotificationChannel.EMAIL,
+          status: NotificationStatus.PENDING,
+        },
       });
 
-      await this.prisma.notification.update({
-        where: { id: notification.id },
-        data: { status: NotificationStatus.SENT, sentAt: now },
-      });
+      try {
+        await this.mailService.sendReminderNotification({
+          to: user.email,
+          firstName: user.firstName,
+          reminderTitle: reminder.title,
+          dueDate,
+          daysLeft,
+          vehicleName,
+        });
 
-      this.logger.log(`✅ Sent reminder notification for "${reminder.title}" to ${user.email}`);
+        await this.prisma.notification.update({
+          where: { id: notification.id },
+          data: { status: NotificationStatus.SENT, sentAt: now },
+        });
+
+        this.logger.log(`✅ Sent reminder notification for "${reminder.title}" to ${user.email}`);
+      } catch (error) {
+        try {
+          await this.prisma.notification.update({
+            where: { id: notification.id },
+            data: { status: NotificationStatus.FAILED },
+          });
+        } catch (updateError) {
+          this.logger.error(
+            `❌ Failed to mark notification as failed: ${updateError instanceof Error ? updateError.message : String(updateError)}`,
+          );
+        }
+
+        this.logger.error(
+          `❌ Failed to send notification for reminder ${reminder.id}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
     } catch (error) {
-      await this.prisma.notification.update({
-        where: { id: notification.id },
-        data: { status: NotificationStatus.FAILED },
-      });
-
       this.logger.error(
-        `❌ Failed to send notification for reminder ${reminder.id}: ${String(error)}`,
+        `❌ Error in sendEmailNotification for reminder ${reminder.id}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
       );
     }
   }
