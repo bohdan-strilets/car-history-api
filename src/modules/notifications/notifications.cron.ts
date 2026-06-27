@@ -1,4 +1,4 @@
-import { REMINDER_THRESHOLD_DAYS } from '@common/constants';
+import { REMINDER_THRESHOLD_DAYS, TIME_UNITS } from '@common/constants';
 import { MailService } from '@modules/mail';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -56,7 +56,7 @@ export class NotificationsCron {
       if (!reminder.dueDate) continue;
 
       const daysLeft = Math.ceil(
-        (reminder.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        (reminder.dueDate.getTime() - now.getTime()) / TIME_UNITS.MILLISECONDS_PER_DAY,
       );
 
       if (!REMINDER_THRESHOLD_DAYS.includes(daysLeft)) continue;

@@ -1,3 +1,4 @@
+import { PAGINATION_DEFAULTS } from '@common/constants';
 import { PaginatedData } from '@common/types';
 import { Injectable } from '@nestjs/common';
 import { MileageSource, Prisma, TimelineType } from '@prisma/client';
@@ -21,7 +22,13 @@ export class TimelineRepository {
     vehicleId: string,
     query: TimelineQueryDto,
   ): Promise<PaginatedData<MappedTimelineEvent>> {
-    const { page = 1, limit = 20, type, dateFrom, dateTo } = query;
+    const {
+      page = PAGINATION_DEFAULTS.DEFAULT_PAGE,
+      limit = PAGINATION_DEFAULTS.DEFAULT_LIMIT,
+      type,
+      dateFrom,
+      dateTo,
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.TimelineEventWhereInput = {

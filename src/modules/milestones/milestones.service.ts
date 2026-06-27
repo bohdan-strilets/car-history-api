@@ -1,3 +1,4 @@
+import { TIME_UNITS } from '@common/constants';
 import { Injectable } from '@nestjs/common';
 
 import { MilestonesRepository } from './milestones.repository';
@@ -110,7 +111,9 @@ export class MilestonesService {
       if (!purchaseInfo?.date) continue;
 
       const purchaseDate = new Date(purchaseInfo.date);
-      const days = Math.floor((Date.now() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+      const days = Math.floor(
+        (Date.now() - purchaseDate.getTime()) / TIME_UNITS.MILLISECONDS_PER_DAY,
+      );
 
       for (const definition of ownershipDefinitions) {
         const condition = definition.condition as MilestoneCondition;

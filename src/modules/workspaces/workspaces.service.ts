@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 
+import { TIME_UNITS } from '@common/constants';
 import {
   ConflictException,
   ErrorCodes,
@@ -219,7 +220,7 @@ export class WorkspacesService {
     if (existing) throw new ConflictException(ErrorCodes.Workspace.ALREADY_MEMBER);
 
     const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 7 * TIME_UNITS.MILLISECONDS_PER_DAY);
 
     const invite = await this.workspaceInvitesRepo.create({
       workspaceId,

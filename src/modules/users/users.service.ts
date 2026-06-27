@@ -1,3 +1,4 @@
+import { TOKEN_EXPIRY } from '@common/constants';
 import { CryptoService } from '@common/crypto';
 import {
   BadRequestException,
@@ -180,7 +181,7 @@ export class UsersService {
   async createEmailVerificationToken(userId: string, email: string): Promise<string> {
     const { raw, hash } = this.crypto.generateToken();
     const formattedEmail = formatEmail(email);
-    const expiresAt = createExpiresAt(24 * 60);
+    const expiresAt = createExpiresAt(TOKEN_EXPIRY.EMAIL_VERIFICATION);
 
     await this.emailVerifyTokenRepo.create({
       userId,
@@ -214,7 +215,7 @@ export class UsersService {
 
   async createPasswordResetToken(userId: string): Promise<string> {
     const { raw, hash } = this.crypto.generateToken();
-    const expiresAt = createExpiresAt(60);
+    const expiresAt = createExpiresAt(TOKEN_EXPIRY.PASSWORD_RESET);
 
     await this.passwordResetTokenRepo.create({
       userId,
