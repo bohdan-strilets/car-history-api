@@ -9,7 +9,7 @@ import {
 } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
-import { UsersService } from '@modules/users';
+import { UsersService } from '@modules/users/users.service';
 import { Injectable } from '@nestjs/common';
 import { InviteStatus, Role, Workspace, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';

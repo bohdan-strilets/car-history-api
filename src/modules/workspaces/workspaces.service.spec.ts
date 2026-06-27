@@ -7,7 +7,7 @@ import {
 } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
-import { UsersService } from '@modules/users';
+import { UsersService } from '@modules/users/users.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InviteStatus, Role, UserStatus, Workspace } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -230,7 +230,11 @@ describe('WorkspacesService', () => {
 
   describe('getByIdWithOwner', () => {
     it('should return workspace with owner info and user role', async () => {
-      workspacesRepo.findByIdWithOwner.mockResolvedValue(mockWorkspace as any);
+      workspacesRepo.findByIdWithOwner.mockResolvedValue({
+        ...mockWorkspace,
+        owner: mockUser,
+        _count: { members: 1, vehicles: 0 },
+      } as any);
       workspaceMembersRepo.findByWorkspaceAndUser.mockResolvedValue(mockMember as any);
 
       const result = await service.getByIdWithOwner('workspace-123', 'user-123');
