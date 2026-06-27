@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 
+import { TIME_UNITS } from '@common/constants';
 import {
   ConflictException,
   ErrorCodes,
@@ -8,7 +9,7 @@ import {
 } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
-import { UsersService } from '@modules/users';
+import { UsersService } from '@modules/users/users.service';
 import { Injectable } from '@nestjs/common';
 import { InviteStatus, Role, Workspace, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -219,7 +220,7 @@ export class WorkspacesService {
     if (existing) throw new ConflictException(ErrorCodes.Workspace.ALREADY_MEMBER);
 
     const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 7 * TIME_UNITS.MILLISECONDS_PER_DAY);
 
     const invite = await this.workspaceInvitesRepo.create({
       workspaceId,

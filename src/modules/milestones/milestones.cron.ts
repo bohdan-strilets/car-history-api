@@ -17,7 +17,10 @@ export class MilestonesCron {
       await this.milestonesService.checkOwnershipMilestones();
       this.logger.log('✅ Ownership milestones cron completed');
     } catch (error) {
-      this.logger.error(`❌ Ownership milestones cron failed: ${String(error)}`);
+      this.logger.error(
+        `❌ Ownership milestones cron failed: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
     }
   }
 }

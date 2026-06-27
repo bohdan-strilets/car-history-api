@@ -1,3 +1,4 @@
+import { PAGINATION_DEFAULTS } from '@common/constants';
 import { TimelineType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsDateString, IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
@@ -7,14 +8,14 @@ export class TimelineQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page?: number = PAGINATION_DEFAULTS.DEFAULT_PAGE;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
-  limit?: number = 20;
+  @Max(PAGINATION_DEFAULTS.MAX_LIMIT)
+  limit?: number = PAGINATION_DEFAULTS.DEFAULT_LIMIT;
 
   @IsOptional()
   @Transform(({ value }) => (typeof value === 'string' ? value.split(',') : value))
