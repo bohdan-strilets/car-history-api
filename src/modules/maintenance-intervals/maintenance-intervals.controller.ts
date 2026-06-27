@@ -1,4 +1,5 @@
 import { Auth, EmailVerified, WorkspaceMember } from '@common/decorators';
+import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
@@ -21,6 +23,7 @@ import { MaintenanceIntervalsService } from './maintenance-intervals.service';
 @Controller('workspaces/:workspaceId/vehicles/:vehicleId/maintenance')
 @Auth()
 @WorkspaceMember()
+@UseGuards(VehicleAccessGuard)
 export class MaintenanceIntervalsController {
   constructor(private readonly maintenanceIntervalsService: MaintenanceIntervalsService) {}
 

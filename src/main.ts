@@ -16,14 +16,41 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   const port = config.port;
-  const frontendUrl = config.frontendUrl;
   const prefix = config.prefix;
+  const allowedOrigins = config.corsAllowedOrigins;
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          defaultSrc: ["'self'"],
+          frameAncestors: ["'none'"],
+        },
+      },
+      frameguard: { action: 'deny' },
+      referrerPolicy: { policy: 'no-referrer' },
+      hsts: config.isProduction
+        ? {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
+    }),
+  );
   app.setGlobalPrefix(prefix);
   app.enableCors({
-    origin: frontendUrl,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
+    methods: config.corsAllowedMethods,
+    allowedHeaders: config.corsAllowedHeaders,
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());

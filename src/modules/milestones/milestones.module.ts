@@ -1,3 +1,4 @@
+import { VehicleAccessGuard, WorkspaceMemberGuard } from '@common/guards';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
 
@@ -9,7 +10,13 @@ import { MilestonesService } from './milestones.service';
 @Module({
   imports: [PrismaModule],
   controllers: [MilestonesController],
-  providers: [MilestonesService, MilestonesRepository, MilestonesCron],
+  providers: [
+    MilestonesService,
+    MilestonesRepository,
+    MilestonesCron,
+    WorkspaceMemberGuard,
+    VehicleAccessGuard,
+  ],
   exports: [MilestonesService],
 })
 export class MilestonesModule {}

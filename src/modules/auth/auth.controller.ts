@@ -1,14 +1,37 @@
+import { AuditLogService } from '@common/audit';
+import { SECURITY } from '@common/constants';
 import {
+  clearCsrfTokenCookie,
+  createCsrfToken,
   clearRefreshTokenCookie,
   getRefreshTokenFromCookie,
+  setCsrfTokenCookie,
   setRefreshTokenCookie,
 } from '@common/cookie';
-import { Auth, CurrentSessionId, CurrentUserId, GoogleAuth, GoogleUser } from '@common/decorators';
+import {
+  Auth,
+  AuthRateLimit,
+  CurrentSessionId,
+  CurrentUserId,
+  GoogleAuth,
+  GoogleUser,
+} from '@common/decorators';
 import { ErrorCodes, UnauthorizedException } from '@common/exceptions';
+import { AuthCsrfGuard, AuthRateLimitGuard } from '@common/guards';
 import { AppConfigService } from '@config/config.service';
 import { CreateGoogleUserDto, UserResponseDto } from '@modules/users';
 import { CreateUserDto } from '@modules/users/dto/create-user.dto';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 
 import { AuthService } from './auth.service';
@@ -20,6 +43,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly config: AppConfigService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   @Post('register')
@@ -29,24 +53,38 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const result = await this.authService.register(dto, req);
-    setRefreshTokenCookie(res, result.refreshToken, this.config);
+    this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({
+      action: 'auth.register',
+      userId: result.user.id,
+      req,
+    });
     return { accessToken: result.accessToken, user: result.user };
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthRateLimitGuard)
+  @AuthRateLimit(SECURITY.AUTH_RATE_LIMITS.LOGIN)
   async login(
     @Body() dto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const result = await this.authService.login(dto, req);
-    setRefreshTokenCookie(res, result.refreshToken, this.config);
+    this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({
+      action: 'auth.login',
+      userId: result.user.id,
+      req,
+    });
     return { accessToken: result.accessToken, user: result.user };
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthCsrfGuard, AuthRateLimitGuard)
+  @AuthRateLimit(SECURITY.AUTH_RATE_LIMITS.REFRESH)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -58,7 +96,12 @@ export class AuthController {
     }
 
     const result = await this.authService.refresh(refreshToken);
-    setRefreshTokenCookie(res, result.refreshToken, this.config);
+    this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({
+      action: 'auth.refresh',
+      userId: result.user.id,
+      req,
+    });
     return { accessToken: result.accessToken, user: result.user };
   }
 
@@ -67,10 +110,19 @@ export class AuthController {
   @Auth()
   async logout(
     @CurrentSessionId() sessionId: string,
+    @CurrentUserId() userId: string,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     await this.authService.logout(sessionId);
     clearRefreshTokenCookie(res, this.config);
+    clearCsrfTokenCookie(res, this.config);
+    this.auditLog.log({
+      action: 'auth.logout',
+      userId,
+      req,
+      metadata: { sessionId },
+    });
   }
 
   @Post('confirm-email')
@@ -88,14 +140,27 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+  @UseGuards(AuthRateLimitGuard)
+  @AuthRateLimit(SECURITY.AUTH_RATE_LIMITS.PASSWORD_RESET)
+  async forgotPassword(@Body() dto: ForgotPasswordDto, @Req() req: Request): Promise<void> {
     await this.authService.forgotPassword(dto.email);
+    this.auditLog.log({
+      action: 'auth.forgot-password',
+      req,
+      metadata: { email: dto.email },
+    });
   }
 
   @Post('reset-password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+  @UseGuards(AuthRateLimitGuard)
+  @AuthRateLimit(SECURITY.AUTH_RATE_LIMITS.PASSWORD_RESET)
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request): Promise<void> {
     await this.authService.resetPassword(dto.token, dto.password);
+    this.auditLog.log({
+      action: 'auth.reset-password',
+      req,
+    });
   }
 
   @Get('google')
@@ -110,7 +175,7 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<void> {
     const result = await this.authService.googleAuth(googleUser, req);
-    setRefreshTokenCookie(res, result.refreshToken, this.config);
+    this.setAuthCookies(res, result.refreshToken);
 
     const redirectUrl = `${this.config.frontendUrl}/auth/google/callback?accessToken=${result.accessToken}`;
     res.redirect(redirectUrl);
@@ -120,5 +185,10 @@ export class AuthController {
   @Auth()
   async me(@CurrentUserId() userId: string): Promise<UserResponseDto> {
     return this.authService.me(userId);
+  }
+
+  private setAuthCookies(res: Response, refreshToken: string): void {
+    setRefreshTokenCookie(res, refreshToken, this.config);
+    setCsrfTokenCookie(res, createCsrfToken(), this.config);
   }
 }

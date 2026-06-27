@@ -5,6 +5,8 @@ export const createValidationPipe = () =>
   new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
+    forbidUnknownValues: true,
+    validateCustomDecorators: true,
     transform: true,
     exceptionFactory: (errors) => {
       const fields: Record<string, string> = {};

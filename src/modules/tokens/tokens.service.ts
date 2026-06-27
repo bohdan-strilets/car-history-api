@@ -15,37 +15,51 @@ export class TokensService {
     return this.jwt.sign(payload, {
       secret: this.config.jwtAccessSecret,
       expiresIn: this.config.jwtAccessExpiresIn,
+      issuer: this.config.jwtIssuer,
+      audience: this.config.jwtAudience,
     });
   }
 
   verifyAccessToken(token: string): JwtAccessPayload {
-    try {
-      return this.jwt.verify<JwtAccessPayload>(token, {
-        secret: this.config.jwtAccessSecret,
-      });
-    } catch {
-      throw new UnauthorizedException('ACCESS_TOKEN_INVALID');
-    }
+    const secrets = [this.config.jwtAccessSecret, ...this.config.jwtAccessPreviousSecrets];
+    return this.verifyWithSecrets<JwtAccessPayload>(token, secrets, 'ACCESS_TOKEN_INVALID');
   }
 
   signRefreshToken(payload: JwtRefreshPayload): string {
     return this.jwt.sign(payload, {
       secret: this.config.jwtRefreshSecret,
       expiresIn: this.config.jwtRefreshExpiresIn,
+      issuer: this.config.jwtIssuer,
+      audience: this.config.jwtAudience,
     });
   }
 
   verifyRefreshToken(token: string): JwtRefreshPayload {
-    try {
-      return this.jwt.verify<JwtRefreshPayload>(token, {
-        secret: this.config.jwtRefreshSecret,
-      });
-    } catch {
-      throw new UnauthorizedException('REFRESH_TOKEN_INVALID');
-    }
+    const secrets = [this.config.jwtRefreshSecret, ...this.config.jwtRefreshPreviousSecrets];
+    return this.verifyWithSecrets<JwtRefreshPayload>(token, secrets, 'REFRESH_TOKEN_INVALID');
   }
 
   decode<T extends JwtAccessPayload | JwtRefreshPayload>(token: string): T | null {
     return this.jwt.decode<T>(token);
+  }
+
+  private verifyWithSecrets<T extends JwtAccessPayload | JwtRefreshPayload>(
+    token: string,
+    secrets: string[],
+    errorCode: string,
+  ): T {
+    for (const secret of secrets) {
+      try {
+        return this.jwt.verify<T>(token, {
+          secret,
+          issuer: this.config.jwtIssuer,
+          audience: this.config.jwtAudience,
+        });
+      } catch {
+        // try next secret
+      }
+    }
+
+    throw new UnauthorizedException(errorCode);
   }
 }

@@ -14,6 +14,7 @@ import { User, UserSettings, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
+import { AvatarUploadService } from './avatar-upload.service';
 import {
   CreateGoogleUserDto,
   CreateUserDto,
@@ -25,6 +26,7 @@ import {
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
 import { toUserProfileResponse, toUserResponse } from './mappers';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
+import { UploadedFile } from './types';
 import { UserSettingsRepo } from './user-settings.repository';
 import { UsersRepo } from './users.repository';
 
@@ -39,6 +41,7 @@ export class UsersService {
     private readonly crypto: CryptoService,
     private readonly config: AppConfigService,
     private readonly prisma: PrismaService,
+    private readonly avatarUploadService: AvatarUploadService,
   ) {}
 
   // ─── Queries ──────────────────────────────────────────────────────────────
@@ -250,6 +253,12 @@ export class UsersService {
 
   async updateSettings(userId: string, dto: UpdateUserSettingsDto): Promise<UserSettings> {
     return this.userSettingsRepo.update(userId, dto);
+  }
+
+  async uploadAvatar(userId: string, file: UploadedFile): Promise<UserResponseDto> {
+    const avatarUrl = await this.avatarUploadService.uploadAvatar(userId, file);
+    const user = await this.usersRepo.update(userId, { avatarUrl });
+    return toUserResponse(user);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
