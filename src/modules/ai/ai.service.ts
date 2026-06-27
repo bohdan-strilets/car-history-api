@@ -1,6 +1,6 @@
 import { AppConfigService } from '@config/config.service';
 import { VehicleSpecsPromptParams } from '@modules/vehicles';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 
 import type { AiCompletionParams, AiCompletionResult } from './ai.types';
@@ -9,6 +9,7 @@ import { buildVehicleSpecsPrompt } from './prompts';
 @Injectable()
 export class AiService {
   private readonly client: OpenAI;
+  private readonly logger = new Logger(AiService.name);
 
   constructor(private readonly config: AppConfigService) {
     this.client = new OpenAI({
@@ -36,7 +37,10 @@ export class AiService {
         tokensUsed: response.usage?.total_tokens ?? 0,
       };
     } catch (error) {
-      console.error('OpenRouter error:', error);
+      this.logger.error('OpenRouter API error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new InternalServerErrorException('AI service unavailable');
     }
   }

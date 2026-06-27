@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TimelineType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 
@@ -11,6 +11,8 @@ import { CreateTimelineEventInput } from './types';
 
 @Injectable()
 export class TimelineService {
+  private readonly logger = new Logger(TimelineService.name);
+
   constructor(
     private readonly timelineRepository: TimelineRepository,
     private readonly milestonesService: MilestonesService,
@@ -71,15 +73,22 @@ export class TimelineService {
     }
 
     if (dto.type !== TimelineType.SALE) {
-      await this.milestonesService
-        .checkAndAward({
+      try {
+        await this.milestonesService.checkAndAward({
           userId,
           vehicleId,
           eventType: dto.type,
           mileage: dto.mileage,
           cost: dto.cost ? Number(dto.cost) : undefined,
-        })
-        .catch((err) => console.error('❌ checkAndAward error:', err));
+        });
+      } catch (error) {
+        this.logger.error('Failed to check and award milestone', {
+          error: error instanceof Error ? error.message : String(error),
+          userId,
+          vehicleId,
+          eventType: dto.type,
+        });
+      }
     }
 
     return event;
