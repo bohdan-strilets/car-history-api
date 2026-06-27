@@ -1,6 +1,6 @@
 import { AppConfigService } from '@config/config.service';
 import { CreateGoogleUserDto } from '@modules/users';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-google-oauth20';
 
@@ -16,11 +16,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   validate(_accessToken: string, _refreshToken: string, profile: Profile): CreateGoogleUserDto {
+    const email = profile.emails?.[0]?.value?.toLowerCase().trim();
+    const firstName = profile.name?.givenName?.trim();
+    const lastName = profile.name?.familyName?.trim();
+
+    if (!email) {
+      throw new BadRequestException('Google profile must have a verified email address');
+    }
+
+    if (!firstName || !lastName) {
+      throw new BadRequestException('Google profile must have first and last names');
+    }
+
     return {
-      email: profile.emails?.[0].value ?? '',
-      firstName: profile.name?.givenName ?? '',
-      lastName: profile.name?.familyName ?? '',
-      avatarUrl: profile.photos?.[0].value,
+      email,
+      firstName,
+      lastName,
+      avatarUrl: profile.photos?.[0]?.value,
     };
   }
 }

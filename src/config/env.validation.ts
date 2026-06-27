@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+
 import { envSchema } from './env.schema';
 
 export function validateEnv(config: Record<string, unknown>) {

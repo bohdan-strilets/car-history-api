@@ -30,7 +30,22 @@ export class NotificationsCron {
         dueDate: { gte: now, lte: maxDate },
       },
       include: {
-        vehicle: { select: { brand: true, model: true, year: true, ownerId: true } },
+        vehicle: {
+          select: {
+            brand: true,
+            model: true,
+            year: true,
+            ownerId: true,
+            owner: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                userSettings: { select: { notificationsEmail: true } },
+              },
+            },
+          },
+        },
         notifications: { select: { createdAt: true, channel: true } },
       },
     });
@@ -67,19 +82,22 @@ export class NotificationsCron {
       title: string;
       dueDate: Date | null;
       vehicleId: string;
-      vehicle: { brand: string; model: string; year: number };
+      vehicle: {
+        brand: string;
+        model: string;
+        year: number;
+        ownerId: string;
+        owner: {
+          email: string;
+          firstName: string;
+          userSettings: { notificationsEmail: boolean } | null;
+        };
+      };
     },
     daysLeft: number,
     now: Date,
   ): Promise<void> {
-    const user = await this.prisma.user.findFirst({
-      where: { vehicles: { some: { id: reminder.vehicleId } } },
-      select: {
-        email: true,
-        firstName: true,
-        userSettings: { select: { notificationsEmail: true } },
-      },
-    });
+    const user = reminder.vehicle.owner;
 
     if (!user || !user.userSettings?.notificationsEmail) return;
 
