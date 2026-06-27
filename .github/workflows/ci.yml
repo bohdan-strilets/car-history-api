@@ -7,7 +7,7 @@ on:
 
 jobs:
   lint-and-typecheck:
-    name: Lint & Typecheck
+    name: Lint, Typecheck, Test & Security Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -28,3 +28,14 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Dependency audit (high/critical)
+        run: npm audit --audit-level=high
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

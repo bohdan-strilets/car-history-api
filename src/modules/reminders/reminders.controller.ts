@@ -1,4 +1,5 @@
 import { Auth, EmailVerified, WorkspaceMember } from '@common/decorators';
+import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CreateReminderDto, ReminderResponseDto, UpdateReminderDto } from './dto';
@@ -17,6 +19,7 @@ import { RemindersService } from './reminders.service';
 @Controller('workspaces/:workspaceId/vehicles/:vehicleId/reminders')
 @Auth()
 @WorkspaceMember()
+@UseGuards(VehicleAccessGuard)
 export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
 

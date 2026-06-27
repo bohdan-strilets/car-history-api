@@ -55,12 +55,36 @@ export class AppConfigService {
     return this.config.get('JWT_REFRESH_SECRET', { infer: true });
   }
 
+  get jwtAccessPreviousSecrets() {
+    const value = this.config.get('JWT_ACCESS_PREVIOUS_SECRETS', { infer: true });
+    return value
+      .split(',')
+      .map((secret) => secret.trim())
+      .filter(Boolean);
+  }
+
+  get jwtRefreshPreviousSecrets() {
+    const value = this.config.get('JWT_REFRESH_PREVIOUS_SECRETS', { infer: true });
+    return value
+      .split(',')
+      .map((secret) => secret.trim())
+      .filter(Boolean);
+  }
+
   get jwtAccessExpiresIn() {
     return this.config.get('JWT_ACCESS_EXPIRES_IN', { infer: true });
   }
 
   get jwtRefreshExpiresIn() {
     return this.config.get('JWT_REFRESH_EXPIRES_IN', { infer: true });
+  }
+
+  get jwtIssuer() {
+    return this.config.get('JWT_ISSUER', { infer: true });
+  }
+
+  get jwtAudience() {
+    return this.config.get('JWT_AUDIENCE', { infer: true });
   }
 
   get maxFailedAttempts() {
@@ -113,5 +137,49 @@ export class AppConfigService {
 
   get openRouterMaxTokens() {
     return this.config.get('OPENROUTER_MAX_TOKENS', { infer: true });
+  }
+
+  get corsAllowedOrigins() {
+    return this.config
+      .get('CORS_ALLOWED_ORIGINS', { infer: true })
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+  }
+
+  get corsAllowedMethods() {
+    return this.config
+      .get('CORS_ALLOWED_METHODS', { infer: true })
+      .split(',')
+      .map((method) => method.trim().toUpperCase())
+      .filter(Boolean);
+  }
+
+  get corsAllowedHeaders() {
+    return this.config
+      .get('CORS_ALLOWED_HEADERS', { infer: true })
+      .split(',')
+      .map((header) => header.trim())
+      .filter(Boolean);
+  }
+
+  get uploadStoragePath() {
+    return this.config.get('UPLOAD_STORAGE_PATH', { infer: true });
+  }
+
+  get uploadMaxFileSizeMb() {
+    return this.config.get('UPLOAD_MAX_FILE_SIZE_MB', { infer: true });
+  }
+
+  get uploadAllowedMimeTypes() {
+    return this.config
+      .get('UPLOAD_ALLOWED_MIME_TYPES', { infer: true })
+      .split(',')
+      .map((mimeType) => mimeType.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  get enableAntivirusScan() {
+    return this.config.get('ENABLE_ANTIVIRUS_SCAN', { infer: true });
   }
 }

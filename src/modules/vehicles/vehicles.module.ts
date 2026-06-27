@@ -1,4 +1,4 @@
-import { WorkspaceMemberGuard } from '@common/guards';
+import { VehicleAccessGuard, WorkspaceMemberGuard } from '@common/guards';
 import { AiModule } from '@modules/ai';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
@@ -10,7 +10,7 @@ import { VehiclesService } from './vehicles.service';
 @Module({
   imports: [PrismaModule, AiModule],
   controllers: [VehiclesController],
-  providers: [VehiclesService, VehiclesRepo, WorkspaceMemberGuard],
+  providers: [VehiclesService, VehiclesRepo, WorkspaceMemberGuard, VehicleAccessGuard],
   exports: [VehiclesService],
 })
 export class VehiclesModule {}

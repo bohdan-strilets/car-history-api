@@ -1,4 +1,5 @@
 import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
+import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CreateVehicleDto, UpdateVehicleDto, UpdateVehicleSpecsDto } from './dto';
@@ -26,6 +28,7 @@ export class VehiclesController {
   }
 
   @Get(':vehicleId')
+  @UseGuards(VehicleAccessGuard)
   async getOne(@Param('vehicleId') vehicleId: string) {
     return this.vehiclesService.getById(vehicleId);
   }
@@ -42,6 +45,7 @@ export class VehiclesController {
 
   @Patch(':vehicleId')
   @EmailVerified()
+  @UseGuards(VehicleAccessGuard)
   async update(
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
@@ -52,6 +56,7 @@ export class VehiclesController {
 
   @Patch(':vehicleId/specs')
   @EmailVerified()
+  @UseGuards(VehicleAccessGuard)
   async updateSpecs(
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
@@ -63,12 +68,14 @@ export class VehiclesController {
   @Delete(':vehicleId')
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(VehicleAccessGuard)
   async delete(@Param('workspaceId') workspaceId: string, @Param('vehicleId') vehicleId: string) {
     return this.vehiclesService.delete(workspaceId, vehicleId);
   }
 
   @Post(':vehicleId/specs/ai')
   @EmailVerified()
+  @UseGuards(VehicleAccessGuard)
   async fillSpecsWithAi(
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,

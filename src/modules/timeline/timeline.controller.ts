@@ -1,4 +1,5 @@
 import { Auth, CurrentUserId, WorkspaceMember } from '@common/decorators';
+import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
   Controller,
@@ -10,6 +11,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CreateTimelineEventDto, TimelineQueryDto, UpdateTimelineEventDto } from './dto';
@@ -18,6 +20,7 @@ import { TimelineService } from './timeline.service';
 @Controller('workspaces/:workspaceId/vehicles/:vehicleId/timeline')
 @Auth()
 @WorkspaceMember()
+@UseGuards(VehicleAccessGuard)
 export class TimelineController {
   constructor(private readonly timelineService: TimelineService) {}
 

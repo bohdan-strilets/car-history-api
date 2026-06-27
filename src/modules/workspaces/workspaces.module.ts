@@ -1,4 +1,5 @@
-import { WorkspaceMemberGuard } from '@common/guards';
+import { AuditLogService } from '@common/audit';
+import { WorkspaceMemberGuard, WorkspaceRoleGuard } from '@common/guards';
 import { AppConfigModule } from '@config/config.module';
 import { MailModule } from '@modules/mail';
 import { UsersModule } from '@modules/users';
@@ -23,6 +24,8 @@ import { WorkspacesService } from './workspaces.service';
     WorkspaceSettingsRepo,
     WorkspaceInvitesRepo,
     WorkspaceMemberGuard,
+    WorkspaceRoleGuard,
+    AuditLogService,
   ],
   exports: [WorkspacesService],
 })

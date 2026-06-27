@@ -1,6 +1,7 @@
 // src/modules/auth/auth.module.ts
 
-import { JwtAuthGuard } from '@common/guards';
+import { AuditLogService } from '@common/audit';
+import { AuthCsrfGuard, AuthRateLimitGuard, JwtAuthGuard } from '@common/guards';
 import { AppConfigModule } from '@config/config.module';
 import { MailModule } from '@modules/mail';
 import { SessionsModule } from '@modules/sessions/sessions.module';
@@ -16,7 +17,15 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   imports: [PassportModule, UsersModule, SessionsModule, AppConfigModule, MailModule],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, GoogleStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    GoogleStrategy,
+    AuthRateLimitGuard,
+    AuthCsrfGuard,
+    AuditLogService,
+  ],
   exports: [JwtAuthGuard],
 })
 export class AuthModule {}

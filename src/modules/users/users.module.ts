@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
+import { AvatarUploadService } from './avatar-upload.service';
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
 import { UserSettingsRepo } from './user-settings.repository';
@@ -21,6 +22,7 @@ import { UsersService } from './users.service';
     EmailVerifyTokenRepo,
     PasswordResetTokenRepo,
     UserSettingsRepo,
+    AvatarUploadService,
   ],
   exports: [UsersService],
 })

@@ -1,9 +1,11 @@
+import { AuditLogService } from '@common/audit';
 import {
   Auth,
   CurrentUserId,
   CurrentWorkspaceMember,
   EmailVerified,
   WorkspaceMember,
+  WorkspaceRole,
 } from '@common/decorators';
 import {
   Body,
@@ -15,8 +17,10 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
-import { WorkspaceMember as WorkspaceMemberEntity } from '@prisma/client';
+import { WorkspaceMember as WorkspaceMemberEntity, Role } from '@prisma/client';
+import { Request } from 'express';
 
 import {
   CreateInviteDto,
@@ -30,7 +34,10 @@ import { WorkspacesService } from './workspaces.service';
 @Controller('workspaces')
 @Auth()
 export class WorkspacesController {
-  constructor(private readonly workspacesService: WorkspacesService) {}
+  constructor(
+    private readonly workspacesService: WorkspacesService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   // ─── Workspace ────────────────────────────────────────────────────────────
 
@@ -52,6 +59,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id')
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   async update(
     @Param('id') workspaceId: string,
     @CurrentUserId() userId: string,
@@ -61,7 +69,7 @@ export class WorkspacesController {
   }
 
   @Delete(':id')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER)
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') workspaceId: string, @CurrentUserId() userId: string) {
@@ -104,40 +112,68 @@ export class WorkspacesController {
   }
 
   @Patch(':id/members/:memberId')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   async updateMemberRole(
     @Param('id') workspaceId: string,
     @Param('memberId') memberId: string,
     @Body() dto: UpdateMemberRoleDto,
     @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+    @Req() req: Request,
   ) {
-    return this.workspacesService.updateMemberRole(workspaceId, memberId, dto, member);
+    const result = await this.workspacesService.updateMemberRole(
+      workspaceId,
+      memberId,
+      dto,
+      member,
+    );
+    this.auditLog.log({
+      action: 'workspace.member-role-updated',
+      userId: member.userId,
+      req,
+      metadata: { workspaceId, memberId, role: dto.role },
+    });
+    return result;
   }
 
   @Delete(':id/members/:memberId')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeMember(
     @Param('id') workspaceId: string,
     @Param('memberId') memberId: string,
     @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+    @Req() req: Request,
   ) {
-    return this.workspacesService.removeMember(workspaceId, memberId, member);
+    await this.workspacesService.removeMember(workspaceId, memberId, member);
+    this.auditLog.log({
+      action: 'workspace.member-removed',
+      userId: member.userId,
+      req,
+      metadata: { workspaceId, memberId },
+    });
   }
 
   // ─── Invites ──────────────────────────────────────────────────────────────
 
   @Post(':id/invites')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   async createInvite(
     @Param('id') workspaceId: string,
     @CurrentUserId() userId: string,
     @Body() dto: CreateInviteDto,
+    @Req() req: Request,
   ) {
-    return this.workspacesService.createInvite(workspaceId, userId, dto);
+    const result = await this.workspacesService.createInvite(workspaceId, userId, dto);
+    this.auditLog.log({
+      action: 'workspace.invite-created',
+      userId,
+      req,
+      metadata: { workspaceId, email: dto.email, role: dto.role ?? Role.MEMBER },
+    });
+    return result;
   }
 
   @Get(':id/invites')
@@ -147,7 +183,7 @@ export class WorkspacesController {
   }
 
   @Delete(':id/invites/:inviteId')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
   async cancelInvite(

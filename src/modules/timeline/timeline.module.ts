@@ -1,3 +1,4 @@
+import { VehicleAccessGuard, WorkspaceMemberGuard } from '@common/guards';
 import { MilestonesModule } from '@modules/milestones';
 import { RemindersModule } from '@modules/reminders';
 import { Module } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { TimelineService } from './timeline.service';
 @Module({
   imports: [PrismaModule, MilestonesModule, RemindersModule],
   controllers: [TimelineController],
-  providers: [TimelineService, TimelineRepository],
+  providers: [TimelineService, TimelineRepository, WorkspaceMemberGuard, VehicleAccessGuard],
   exports: [TimelineService],
 })
 export class TimelineModule {}

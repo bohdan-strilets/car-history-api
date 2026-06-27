@@ -1,20 +1,24 @@
+import { randomBytes } from 'crypto';
+
 import { AppConfigService } from '@config/config.service';
 import { Request, Response } from 'express';
 import ms from 'ms';
 
-import { REFRESH_TOKEN_COOKIE } from './constants.cookie';
+import { CSRF_TOKEN_COOKIE } from './constants.cookie';
 
 const getApiPrefix = (config: AppConfigService): string => {
   return `/${config.prefix}/auth`;
 };
 
-export const setRefreshTokenCookie = (
+export const createCsrfToken = (): string => randomBytes(32).toString('hex');
+
+export const setCsrfTokenCookie = (
   res: Response,
   token: string,
   config: AppConfigService,
 ): void => {
-  res.cookie(REFRESH_TOKEN_COOKIE, token, {
-    httpOnly: true,
+  res.cookie(CSRF_TOKEN_COOKIE, token, {
+    httpOnly: false,
     secure: config.isProduction,
     sameSite: 'strict',
     maxAge: ms(config.jwtRefreshExpiresIn),
@@ -22,15 +26,15 @@ export const setRefreshTokenCookie = (
   });
 };
 
-export const clearRefreshTokenCookie = (res: Response, config: AppConfigService): void => {
-  res.clearCookie(REFRESH_TOKEN_COOKIE, {
-    httpOnly: true,
+export const clearCsrfTokenCookie = (res: Response, config: AppConfigService): void => {
+  res.clearCookie(CSRF_TOKEN_COOKIE, {
+    httpOnly: false,
     secure: config.isProduction,
     sameSite: 'strict',
     path: getApiPrefix(config),
   });
 };
 
-export const getRefreshTokenFromCookie = (req: Request): string | null => {
-  return req.cookies[REFRESH_TOKEN_COOKIE] || null;
+export const getCsrfTokenFromCookie = (req: Request): string | null => {
+  return req.cookies[CSRF_TOKEN_COOKIE] || null;
 };

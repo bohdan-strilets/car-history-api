@@ -62,6 +62,13 @@ export class SessionsService {
       throw new UnauthorizedException(ErrorCodes.Auth.SESSION_NOT_FOUND);
     }
 
+    const isTokenBoundToSession =
+      session.id === payload.sessionId && session.userId === payload.sub;
+    if (!isTokenBoundToSession) {
+      await this.sessionsRepo.revokeByTokenFamily(payload.tokenFamily);
+      throw new UnauthorizedException(ErrorCodes.Auth.REFRESH_TOKEN_INVALID);
+    }
+
     const tokenHash = this.crypto.hashToken(rawRefreshToken);
     if (session.refreshTokenHash !== tokenHash) {
       await this.sessionsRepo.revokeByTokenFamily(payload.tokenFamily);

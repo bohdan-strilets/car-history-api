@@ -13,6 +13,7 @@ import { UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
+import { AvatarUploadService } from './avatar-upload.service';
 import { CreateGoogleUserDto, CreateUserDto } from './dto';
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
@@ -30,6 +31,7 @@ describe('UsersService', () => {
   let crypto: jest.Mocked<CryptoService>;
   let config: jest.Mocked<AppConfigService>;
   let prisma: jest.Mocked<PrismaService>;
+  let avatarUploadService: jest.Mocked<AvatarUploadService>;
 
   const mockUser = {
     id: 'user-123',
@@ -119,6 +121,12 @@ describe('UsersService', () => {
             $transaction: jest.fn(),
           },
         },
+        {
+          provide: AvatarUploadService,
+          useValue: {
+            uploadAvatar: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -133,6 +141,7 @@ describe('UsersService', () => {
     crypto = module.get(CryptoService) as jest.Mocked<CryptoService>;
     config = module.get(AppConfigService) as jest.Mocked<AppConfigService>;
     prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+    avatarUploadService = module.get(AvatarUploadService) as jest.Mocked<AvatarUploadService>;
   });
 
   afterEach(() => {
