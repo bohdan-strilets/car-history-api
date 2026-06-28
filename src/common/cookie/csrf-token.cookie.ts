@@ -6,10 +6,6 @@ import ms from 'ms';
 
 import { CSRF_TOKEN_COOKIE } from './constants.cookie';
 
-const getApiPrefix = (config: AppConfigService): string => {
-  return `/${config.prefix}/auth`;
-};
-
 export const createCsrfToken = (): string => randomBytes(32).toString('hex');
 
 export const setCsrfTokenCookie = (
@@ -22,7 +18,7 @@ export const setCsrfTokenCookie = (
     secure: config.isProduction,
     sameSite: 'strict',
     maxAge: ms(config.jwtRefreshExpiresIn),
-    path: getApiPrefix(config),
+    path: '/',
   });
 };
 
@@ -31,7 +27,7 @@ export const clearCsrfTokenCookie = (res: Response, config: AppConfigService): v
     httpOnly: false,
     secure: config.isProduction,
     sameSite: 'strict',
-    path: getApiPrefix(config),
+    path: '/',
   });
 };
 
