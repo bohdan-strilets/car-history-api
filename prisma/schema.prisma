@@ -372,7 +372,8 @@ model MaintenanceInterval {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  services Service[]
 
   @@map("maintenance_intervals")
 }
@@ -643,16 +644,19 @@ enum ChargeType {
 }
 
 model Service {
-  id        String          @id @default(cuid())
-  eventId   String          @unique
-  category  ServiceCategory
-  parts     Json?
-  works     Json?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id                    String          @id @default(cuid())
+  eventId               String          @unique
+  maintenanceIntervalId String?
+  category              ServiceCategory
+  parts                 Json?
+  works                 Json?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
-  event TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event               TimelineEvent        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  maintenanceInterval MaintenanceInterval? @relation(fields: [maintenanceIntervalId], references: [id], onDelete: SetNull)
 
+  @@index([maintenanceIntervalId])
   @@map("services")
 }
 
