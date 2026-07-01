@@ -1,6 +1,6 @@
 import { MaintenanceStatus, MaintenanceType } from '@prisma/client';
 
-export interface CreateMaintenanceIntervalInput {
+export interface CreateMaintenanceInput {
   vehicleId: string;
   type: MaintenanceType;
   title: string;
@@ -13,7 +13,7 @@ export interface CreateMaintenanceIntervalInput {
   status?: MaintenanceStatus;
 }
 
-export interface UpdateMaintenanceIntervalInput {
+export interface UpdateMaintenanceInput {
   type?: MaintenanceType;
   title?: string;
   intervalKm?: number | null;

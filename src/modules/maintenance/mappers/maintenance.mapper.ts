@@ -1,10 +1,8 @@
 import { MaintenanceInterval } from '@prisma/client';
 
-import { MaintenanceIntervalResponseDto } from '../dto';
+import { MaintenanceResponseDto } from '../dto';
 
-export function toMaintenanceIntervalResponse(
-  interval: MaintenanceInterval,
-): MaintenanceIntervalResponseDto {
+export function toMaintenanceResponse(interval: MaintenanceInterval): MaintenanceResponseDto {
   return {
     id: interval.id,
     vehicleId: interval.vehicleId,

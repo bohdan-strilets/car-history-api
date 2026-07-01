@@ -1,7 +1,7 @@
 import { MaintenanceType } from '@prisma/client';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-export class CreateMaintenanceIntervalDto {
+export class CreateMaintenanceDto {
   @IsEnum(MaintenanceType)
   declare type: MaintenanceType;
 

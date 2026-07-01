@@ -5,18 +5,14 @@ import { Injectable } from '@nestjs/common';
 import { MaintenanceInterval, MaintenanceStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
-import {
-  CreateMaintenanceIntervalDto,
-  MaintenanceIntervalResponseDto,
-  UpdateMaintenanceIntervalDto,
-} from './dto';
-import { MaintenanceIntervalsRepository } from './maintenance-intervals.repository';
-import { toMaintenanceIntervalResponse } from './mappers';
+import { CreateMaintenanceDto, MaintenanceResponseDto, UpdateMaintenanceDto } from './dto';
+import { MaintenanceRepository } from './maintenance.repository';
+import { toMaintenanceResponse } from './mappers';
 
 @Injectable()
-export class MaintenanceIntervalsService {
+export class MaintenanceService {
   constructor(
-    private readonly maintenanceIntervalsRepo: MaintenanceIntervalsRepository,
+    private readonly maintenanceRepo: MaintenanceRepository,
     private readonly remindersService: RemindersService,
     private readonly timelineService: TimelineService,
     private readonly prisma: PrismaService,
@@ -24,13 +20,13 @@ export class MaintenanceIntervalsService {
 
   // ─── Queries ──────────────────────────────────────────────────────────────
 
-  async getAllByVehicleId(vehicleId: string): Promise<MaintenanceIntervalResponseDto[]> {
-    const intervals = await this.maintenanceIntervalsRepo.findAllByVehicleId(vehicleId);
-    return intervals.map(toMaintenanceIntervalResponse);
+  async getAllByVehicleId(vehicleId: string): Promise<MaintenanceResponseDto[]> {
+    const intervals = await this.maintenanceRepo.findAllByVehicleId(vehicleId);
+    return intervals.map(toMaintenanceResponse);
   }
 
   async getById(id: string): Promise<MaintenanceInterval> {
-    const interval = await this.maintenanceIntervalsRepo.findById(id);
+    const interval = await this.maintenanceRepo.findById(id);
     if (!interval) throw new NotFoundException(ErrorCodes.Maintenance.NOT_FOUND);
     return interval;
   }
@@ -40,8 +36,8 @@ export class MaintenanceIntervalsService {
   async create(
     workspaceId: string,
     vehicleId: string,
-    dto: CreateMaintenanceIntervalDto,
-  ): Promise<MaintenanceIntervalResponseDto> {
+    dto: CreateMaintenanceDto,
+  ): Promise<MaintenanceResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
 
     const { nextServiceMileage, nextServiceDate } = this.calculateNext({
@@ -52,7 +48,7 @@ export class MaintenanceIntervalsService {
     });
 
     const interval = await this.prisma.$transaction(async (tx) => {
-      const created = await this.maintenanceIntervalsRepo.create(
+      const created = await this.maintenanceRepo.create(
         {
           vehicleId,
           type: dto.type,
@@ -71,15 +67,15 @@ export class MaintenanceIntervalsService {
       return created;
     });
 
-    return toMaintenanceIntervalResponse(interval);
+    return toMaintenanceResponse(interval);
   }
 
   async update(
     workspaceId: string,
     vehicleId: string,
     id: string,
-    dto: UpdateMaintenanceIntervalDto,
-  ): Promise<MaintenanceIntervalResponseDto> {
+    dto: UpdateMaintenanceDto,
+  ): Promise<MaintenanceResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
@@ -99,7 +95,7 @@ export class MaintenanceIntervalsService {
     const { nextServiceMileage, nextServiceDate } = this.calculateNext(merged);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const result = await this.maintenanceIntervalsRepo.update(
+      const result = await this.maintenanceRepo.update(
         id,
         {
           type: dto.type,
@@ -118,14 +114,14 @@ export class MaintenanceIntervalsService {
       return result;
     });
 
-    return toMaintenanceIntervalResponse(updated);
+    return toMaintenanceResponse(updated);
   }
 
   async disable(
     workspaceId: string,
     vehicleId: string,
     id: string,
-  ): Promise<MaintenanceIntervalResponseDto> {
+  ): Promise<MaintenanceResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
@@ -138,7 +134,7 @@ export class MaintenanceIntervalsService {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const result = await this.maintenanceIntervalsRepo.update(
+      const result = await this.maintenanceRepo.update(
         id,
         { status: MaintenanceStatus.DISABLED },
         tx,
@@ -148,14 +144,14 @@ export class MaintenanceIntervalsService {
       return result;
     });
 
-    return toMaintenanceIntervalResponse(updated);
+    return toMaintenanceResponse(updated);
   }
 
   async enable(
     workspaceId: string,
     vehicleId: string,
     id: string,
-  ): Promise<MaintenanceIntervalResponseDto> {
+  ): Promise<MaintenanceResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
@@ -164,7 +160,7 @@ export class MaintenanceIntervalsService {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const result = await this.maintenanceIntervalsRepo.update(
+      const result = await this.maintenanceRepo.update(
         id,
         { status: MaintenanceStatus.ACTIVE },
         tx,
@@ -174,7 +170,7 @@ export class MaintenanceIntervalsService {
       return result;
     });
 
-    return toMaintenanceIntervalResponse(updated);
+    return toMaintenanceResponse(updated);
   }
 
   async delete(workspaceId: string, vehicleId: string, id: string): Promise<void> {
@@ -187,7 +183,7 @@ export class MaintenanceIntervalsService {
 
     await this.prisma.$transaction(async (tx) => {
       await this.remindersService.deleteByMaintenanceIntervalId(id, tx);
-      await this.maintenanceIntervalsRepo.delete(id, tx);
+      await this.maintenanceRepo.delete(id, tx);
     });
   }
 
@@ -196,7 +192,7 @@ export class MaintenanceIntervalsService {
     vehicleId: string,
     id: string,
     dto: { mileage: number; date: Date },
-  ): Promise<MaintenanceIntervalResponseDto> {
+  ): Promise<MaintenanceResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
@@ -212,7 +208,7 @@ export class MaintenanceIntervalsService {
     });
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      const result = await this.maintenanceIntervalsRepo.update(
+      const result = await this.maintenanceRepo.update(
         id,
         {
           lastServiceMileage: dto.mileage,
@@ -239,7 +235,7 @@ export class MaintenanceIntervalsService {
       return result;
     });
 
-    return toMaintenanceIntervalResponse(updated);
+    return toMaintenanceResponse(updated);
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { MaintenanceStatus, MaintenanceType } from '@prisma/client';
 
-export class MaintenanceIntervalResponseDto {
+export class MaintenanceResponseDto {
   declare id: string;
   declare vehicleId: string;
   declare type: MaintenanceType;

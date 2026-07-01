@@ -14,23 +14,23 @@ import {
 } from '@nestjs/common';
 
 import {
-  CreateMaintenanceIntervalDto,
-  MaintenanceIntervalResponseDto,
+  CreateMaintenanceDto,
+  MaintenanceResponseDto,
   MarkMaintenanceDoneDto,
-  UpdateMaintenanceIntervalDto,
+  UpdateMaintenanceDto,
 } from './dto';
-import { MaintenanceIntervalsService } from './maintenance-intervals.service';
+import { MaintenanceService } from './maintenance.service';
 
 @Controller('workspaces/:workspaceId/vehicles/:vehicleId/maintenance')
 @Auth()
 @WorkspaceMember()
 @UseGuards(VehicleAccessGuard)
-export class MaintenanceIntervalsController {
-  constructor(private readonly maintenanceIntervalsService: MaintenanceIntervalsService) {}
+export class MaintenanceController {
+  constructor(private readonly maintenanceService: MaintenanceService) {}
 
   @Get()
-  getAll(@Param('vehicleId') vehicleId: string): Promise<MaintenanceIntervalResponseDto[]> {
-    return this.maintenanceIntervalsService.getAllByVehicleId(vehicleId);
+  getAll(@Param('vehicleId') vehicleId: string): Promise<MaintenanceResponseDto[]> {
+    return this.maintenanceService.getAllByVehicleId(vehicleId);
   }
 
   @Post()
@@ -38,9 +38,9 @@ export class MaintenanceIntervalsController {
   create(
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
-    @Body() dto: CreateMaintenanceIntervalDto,
-  ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.create(workspaceId, vehicleId, dto);
+    @Body() dto: CreateMaintenanceDto,
+  ): Promise<MaintenanceResponseDto> {
+    return this.maintenanceService.create(workspaceId, vehicleId, dto);
   }
 
   @Patch(':id')
@@ -49,9 +49,9 @@ export class MaintenanceIntervalsController {
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateMaintenanceIntervalDto,
-  ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.update(workspaceId, vehicleId, id, dto);
+    @Body() dto: UpdateMaintenanceDto,
+  ): Promise<MaintenanceResponseDto> {
+    return this.maintenanceService.update(workspaceId, vehicleId, id, dto);
   }
 
   @Patch(':id/disable')
@@ -60,8 +60,8 @@ export class MaintenanceIntervalsController {
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
-  ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.disable(workspaceId, vehicleId, id);
+  ): Promise<MaintenanceResponseDto> {
+    return this.maintenanceService.disable(workspaceId, vehicleId, id);
   }
 
   @Patch(':id/enable')
@@ -70,8 +70,8 @@ export class MaintenanceIntervalsController {
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
-  ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.enable(workspaceId, vehicleId, id);
+  ): Promise<MaintenanceResponseDto> {
+    return this.maintenanceService.enable(workspaceId, vehicleId, id);
   }
 
   @Patch(':id/mark-done')
@@ -81,8 +81,8 @@ export class MaintenanceIntervalsController {
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
     @Body() dto: MarkMaintenanceDoneDto,
-  ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.markAsDone(workspaceId, vehicleId, id, {
+  ): Promise<MaintenanceResponseDto> {
+    return this.maintenanceService.markAsDone(workspaceId, vehicleId, id, {
       mileage: dto.mileage,
       date: new Date(dto.date),
     });
@@ -96,6 +96,6 @@ export class MaintenanceIntervalsController {
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
   ): Promise<void> {
-    return this.maintenanceIntervalsService.delete(workspaceId, vehicleId, id);
+    return this.maintenanceService.delete(workspaceId, vehicleId, id);
   }
 }

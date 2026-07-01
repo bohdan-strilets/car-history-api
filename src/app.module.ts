@@ -2,7 +2,7 @@ import { CryptoModule } from '@common/crypto';
 import { AiModule } from '@modules/ai';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
-import { MaintenanceIntervalsModule } from '@modules/maintenance-intervals';
+import { MaintenanceModule } from '@modules/maintenance';
 import { MilestonesModule } from '@modules/milestones';
 import { NotificationsModule } from '@modules/notifications';
 import { RemindersModule } from '@modules/reminders';
@@ -32,7 +32,7 @@ import { PrismaModule } from './prisma';
     VehiclesModule,
     TimelineModule,
     MilestonesModule,
-    MaintenanceIntervalsModule,
+    MaintenanceModule,
     RemindersModule,
     NotificationsModule,
     ScheduleModule.forRoot(),

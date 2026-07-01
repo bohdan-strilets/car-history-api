@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { MaintenanceInterval, Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
-import { CreateMaintenanceIntervalInput, UpdateMaintenanceIntervalInput } from './types';
+import { CreateMaintenanceInput, UpdateMaintenanceInput } from './types';
 
 @Injectable()
-export class MaintenanceIntervalsRepository {
+export class MaintenanceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(id: string, tx?: Prisma.TransactionClient): Promise<MaintenanceInterval | null> {
@@ -21,7 +21,7 @@ export class MaintenanceIntervalsRepository {
   }
 
   async create(
-    data: CreateMaintenanceIntervalInput,
+    data: CreateMaintenanceInput,
     tx?: Prisma.TransactionClient,
   ): Promise<MaintenanceInterval> {
     const client = tx ?? this.prisma;
@@ -30,7 +30,7 @@ export class MaintenanceIntervalsRepository {
 
   async update(
     id: string,
-    data: UpdateMaintenanceIntervalInput,
+    data: UpdateMaintenanceInput,
     tx?: Prisma.TransactionClient,
   ): Promise<MaintenanceInterval> {
     const client = tx ?? this.prisma;
