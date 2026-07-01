@@ -1,4 +1,4 @@
-import { WORKSPACE_ROLE_OPTIONS } from '@common/decorators/workspace-role.constants';
+import { WORKSPACE_ROLE_OPTIONS } from '@common/constants';
 import { ErrorCodes, ForbiddenException } from '@common/exceptions';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';

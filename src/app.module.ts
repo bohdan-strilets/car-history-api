@@ -7,6 +7,7 @@ import { MilestonesModule } from '@modules/milestones';
 import { NotificationsModule } from '@modules/notifications';
 import { RemindersModule } from '@modules/reminders';
 import { SessionsModule } from '@modules/sessions';
+import { StatsModule } from '@modules/stats';
 import { TimelineModule } from '@modules/timeline';
 import { TokensModule } from '@modules/tokens';
 import { UsersModule } from '@modules/users';
@@ -36,6 +37,7 @@ import { PrismaModule } from './prisma';
     RemindersModule,
     NotificationsModule,
     ScheduleModule.forRoot(),
+    StatsModule,
     AiModule,
   ],
 })
