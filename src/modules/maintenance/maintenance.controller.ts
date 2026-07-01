@@ -36,53 +36,48 @@ export class MaintenanceController {
   @Post()
   @EmailVerified()
   create(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Body() dto: CreateMaintenanceDto,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.create(workspaceId, vehicleId, dto);
+    return this.maintenanceService.create(vehicleId, dto);
   }
 
   @Patch(':id')
   @EmailVerified()
   update(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
     @Body() dto: UpdateMaintenanceDto,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.update(workspaceId, vehicleId, id, dto);
+    return this.maintenanceService.update(vehicleId, id, dto);
   }
 
   @Patch(':id/disable')
   @EmailVerified()
   disable(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.disable(workspaceId, vehicleId, id);
+    return this.maintenanceService.disable(vehicleId, id);
   }
 
   @Patch(':id/enable')
   @EmailVerified()
   enable(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.enable(workspaceId, vehicleId, id);
+    return this.maintenanceService.enable(vehicleId, id);
   }
 
   @Patch(':id/mark-done')
   @EmailVerified()
   markAsDone(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
     @Body() dto: MarkMaintenanceDoneDto,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.markAsDone(workspaceId, vehicleId, id, {
+    return this.maintenanceService.markAsDone(vehicleId, id, {
       mileage: dto.mileage,
       date: new Date(dto.date),
     });
@@ -91,11 +86,7 @@ export class MaintenanceController {
   @Delete(':id')
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(
-    @Param('workspaceId') workspaceId: string,
-    @Param('vehicleId') vehicleId: string,
-    @Param('id') id: string,
-  ): Promise<void> {
-    return this.maintenanceService.delete(workspaceId, vehicleId, id);
+  delete(@Param('vehicleId') vehicleId: string, @Param('id') id: string): Promise<void> {
+    return this.maintenanceService.delete(vehicleId, id);
   }
 }

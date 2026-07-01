@@ -15,7 +15,7 @@ export class MaintenanceService {
     private readonly maintenanceRepo: MaintenanceRepository,
     private readonly remindersService: RemindersService,
     private readonly timelineService: TimelineService,
-    private readonly prisma: PrismaService,
+    private readonly prisma: PrismaService, // used only for $transaction
   ) {}
 
   // ─── Queries ──────────────────────────────────────────────────────────────
@@ -33,13 +33,7 @@ export class MaintenanceService {
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
-  async create(
-    workspaceId: string,
-    vehicleId: string,
-    dto: CreateMaintenanceDto,
-  ): Promise<MaintenanceResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
-
+  async create(vehicleId: string, dto: CreateMaintenanceDto): Promise<MaintenanceResponseDto> {
     const { nextServiceMileage, nextServiceDate } = this.calculateNext({
       intervalKm: dto.intervalKm ?? null,
       intervalMonths: dto.intervalMonths ?? null,
@@ -71,12 +65,10 @@ export class MaintenanceService {
   }
 
   async update(
-    workspaceId: string,
     vehicleId: string,
     id: string,
     dto: UpdateMaintenanceDto,
   ): Promise<MaintenanceResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
@@ -117,12 +109,7 @@ export class MaintenanceService {
     return toMaintenanceResponse(updated);
   }
 
-  async disable(
-    workspaceId: string,
-    vehicleId: string,
-    id: string,
-  ): Promise<MaintenanceResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async disable(vehicleId: string, id: string): Promise<MaintenanceResponseDto> {
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
@@ -147,12 +134,7 @@ export class MaintenanceService {
     return toMaintenanceResponse(updated);
   }
 
-  async enable(
-    workspaceId: string,
-    vehicleId: string,
-    id: string,
-  ): Promise<MaintenanceResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async enable(vehicleId: string, id: string): Promise<MaintenanceResponseDto> {
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
@@ -173,8 +155,7 @@ export class MaintenanceService {
     return toMaintenanceResponse(updated);
   }
 
-  async delete(workspaceId: string, vehicleId: string, id: string): Promise<void> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async delete(vehicleId: string, id: string): Promise<void> {
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
@@ -188,12 +169,10 @@ export class MaintenanceService {
   }
 
   async markAsDone(
-    workspaceId: string,
     vehicleId: string,
     id: string,
     dto: { mileage: number; date: Date },
   ): Promise<MaintenanceResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
@@ -239,22 +218,6 @@ export class MaintenanceService {
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────
-
-  private async ensureVehicleBelongsToWorkspace(
-    workspaceId: string,
-    vehicleId: string,
-  ): Promise<void> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId, deletedAt: null },
-      select: { workspaceId: true },
-    });
-
-    if (!vehicle) throw new NotFoundException(ErrorCodes.Vehicle.NOT_FOUND);
-
-    if (vehicle.workspaceId !== workspaceId) {
-      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
-    }
-  }
 
   private calculateNext(data: {
     intervalKm?: number | null;
