@@ -31,52 +31,44 @@ export class RemindersController {
   @Post()
   @EmailVerified()
   create(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Body() dto: CreateReminderDto,
   ): Promise<ReminderResponseDto> {
-    return this.remindersService.create(workspaceId, vehicleId, dto);
+    return this.remindersService.create(vehicleId, dto);
   }
 
   @Patch(':id')
   @EmailVerified()
   update(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
     @Body() dto: UpdateReminderDto,
   ): Promise<ReminderResponseDto> {
-    return this.remindersService.update(workspaceId, vehicleId, id, dto);
+    return this.remindersService.update(vehicleId, id, dto);
   }
 
   @Patch(':id/complete')
   @EmailVerified()
   complete(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
   ): Promise<ReminderResponseDto> {
-    return this.remindersService.complete(workspaceId, vehicleId, id);
+    return this.remindersService.complete(vehicleId, id);
   }
 
   @Patch(':id/dismiss')
   @EmailVerified()
   dismiss(
-    @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
   ): Promise<ReminderResponseDto> {
-    return this.remindersService.dismiss(workspaceId, vehicleId, id);
+    return this.remindersService.dismiss(vehicleId, id);
   }
 
   @Delete(':id')
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(
-    @Param('workspaceId') workspaceId: string,
-    @Param('vehicleId') vehicleId: string,
-    @Param('id') id: string,
-  ): Promise<void> {
-    return this.remindersService.delete(workspaceId, vehicleId, id);
+  delete(@Param('vehicleId') vehicleId: string, @Param('id') id: string): Promise<void> {
+    return this.remindersService.delete(vehicleId, id);
   }
 }

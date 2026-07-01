@@ -16,10 +16,7 @@ import { CreateReminderInput } from './types';
 
 @Injectable()
 export class RemindersService {
-  constructor(
-    private readonly remindersRepo: RemindersRepository,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly remindersRepo: RemindersRepository) {}
 
   // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -36,13 +33,7 @@ export class RemindersService {
 
   // ─── Commands (manual) ────────────────────────────────────────────────────
 
-  async create(
-    workspaceId: string,
-    vehicleId: string,
-    dto: CreateReminderDto,
-  ): Promise<ReminderResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
-
+  async create(vehicleId: string, dto: CreateReminderDto): Promise<ReminderResponseDto> {
     const reminder = await this.remindersRepo.create({
       vehicleId,
       type: dto.type,
@@ -56,12 +47,10 @@ export class RemindersService {
   }
 
   async update(
-    workspaceId: string,
     vehicleId: string,
     id: string,
     dto: UpdateReminderDto,
   ): Promise<ReminderResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const reminder = await this.getById(id);
 
     if (reminder.vehicleId !== vehicleId) {
@@ -79,8 +68,7 @@ export class RemindersService {
     return toReminderResponse(updated);
   }
 
-  async complete(workspaceId: string, vehicleId: string, id: string): Promise<ReminderResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async complete(vehicleId: string, id: string): Promise<ReminderResponseDto> {
     const reminder = await this.getById(id);
 
     if (reminder.vehicleId !== vehicleId) {
@@ -99,8 +87,7 @@ export class RemindersService {
     return toReminderResponse(updated);
   }
 
-  async dismiss(workspaceId: string, vehicleId: string, id: string): Promise<ReminderResponseDto> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async dismiss(vehicleId: string, id: string): Promise<ReminderResponseDto> {
     const reminder = await this.getById(id);
 
     if (reminder.vehicleId !== vehicleId) {
@@ -118,8 +105,7 @@ export class RemindersService {
     return toReminderResponse(updated);
   }
 
-  async delete(workspaceId: string, vehicleId: string, id: string): Promise<void> {
-    await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
+  async delete(vehicleId: string, id: string): Promise<void> {
     const reminder = await this.getById(id);
 
     if (reminder.vehicleId !== vehicleId) {
@@ -221,22 +207,6 @@ export class RemindersService {
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────
-
-  private async ensureVehicleBelongsToWorkspace(
-    workspaceId: string,
-    vehicleId: string,
-  ): Promise<void> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId, deletedAt: null },
-      select: { workspaceId: true },
-    });
-
-    if (!vehicle) throw new NotFoundException(ErrorCodes.Vehicle.NOT_FOUND);
-
-    if (vehicle.workspaceId !== workspaceId) {
-      throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
-    }
-  }
 
   private mapDocumentTypeToReminderType(documentType: DocumentType): ReminderType | null {
     const map: Partial<Record<DocumentType, ReminderType>> = {

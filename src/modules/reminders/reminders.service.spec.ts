@@ -1,16 +1,14 @@
-import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MaintenanceType, Reminder, ReminderStatus, ReminderType } from '@prisma/client';
-import { PrismaService } from '@prisma/prisma.service';
 
-import { CreateReminderDto, ReminderResponseDto, UpdateReminderDto } from './dto';
+import { CreateReminderDto, UpdateReminderDto } from './dto';
 import { RemindersRepository } from './reminders.repository';
 import { RemindersService } from './reminders.service';
 
 describe('RemindersService', () => {
   let service: RemindersService;
   let remindersRepo: jest.Mocked<RemindersRepository>;
-  let prisma: jest.Mocked<PrismaService>;
 
   const mockReminder = {
     id: 'reminder-123',
@@ -59,23 +57,11 @@ describe('RemindersService', () => {
             delete: jest.fn(),
           },
         },
-        {
-          provide: PrismaService,
-          useValue: {
-            vehicle: {
-              findUnique: jest.fn(),
-            },
-          },
-        },
       ],
     }).compile();
 
     service = module.get<RemindersService>(RemindersService);
     remindersRepo = module.get(RemindersRepository) as jest.Mocked<RemindersRepository>;
-    prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
-
-    // Mock ensureVehicleBelongsToWorkspace to avoid needing full Prisma setup
-    jest.spyOn(service as any, 'ensureVehicleBelongsToWorkspace').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -143,10 +129,9 @@ describe('RemindersService', () => {
         dueMileage: 60000,
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.create.mockResolvedValue(mockReminder);
 
-      const result = await service.create('workspace-123', 'vehicle-123', createDto);
+      const result = await service.create('vehicle-123', createDto);
 
       expect(result).toBeDefined();
       expect(remindersRepo.create).toHaveBeenCalledWith(
@@ -168,10 +153,9 @@ describe('RemindersService', () => {
         dueDate: '2026-08-27',
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.create.mockResolvedValue(mockReminder2);
 
-      const result = await service.create('workspace-123', 'vehicle-123', createDto);
+      await service.create('vehicle-123', createDto);
 
       expect(remindersRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -187,10 +171,9 @@ describe('RemindersService', () => {
         dueMileage: 30000,
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.create.mockResolvedValue(mockReminder);
 
-      const result = await service.create('workspace-123', 'vehicle-123', createDto);
+      await service.create('vehicle-123', createDto);
 
       expect(remindersRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -206,10 +189,9 @@ describe('RemindersService', () => {
         dueDate: '2026-07-27',
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.create.mockResolvedValue(mockReminder);
 
-      await service.create('workspace-123', 'vehicle-123', createDto);
+      await service.create('vehicle-123', createDto);
 
       const createCall = remindersRepo.create.mock.calls[0][0];
       expect(createCall.dueDate).toBeInstanceOf(Date);
@@ -217,26 +199,20 @@ describe('RemindersService', () => {
   });
 
   describe('update', () => {
-    it('should update reminder in correct workspace and vehicle', async () => {
+    it('should update reminder in correct vehicle', async () => {
       const updateDto: UpdateReminderDto = {
         type: ReminderType.OIL_CHANGE,
         title: 'Oil Change Updated',
         dueMileage: 65000,
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(mockReminder);
       remindersRepo.update.mockResolvedValue({
         ...mockReminder,
         title: 'Oil Change Updated',
       });
 
-      const result = await service.update(
-        'workspace-123',
-        'vehicle-123',
-        'reminder-123',
-        updateDto,
-      );
+      const result = await service.update('vehicle-123', 'reminder-123', updateDto);
 
       expect(result).toBeDefined();
       expect(remindersRepo.update).toHaveBeenCalledWith(
@@ -254,15 +230,14 @@ describe('RemindersService', () => {
         title: 'Oil Change',
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         vehicleId: 'other-vehicle',
       });
 
-      await expect(
-        service.update('workspace-123', 'vehicle-123', 'reminder-123', updateDto),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update('vehicle-123', 'reminder-123', updateDto)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw NotFoundException if reminder not found', async () => {
@@ -271,12 +246,11 @@ describe('RemindersService', () => {
         title: 'Oil Change',
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(null);
 
-      await expect(
-        service.update('workspace-123', 'vehicle-123', 'invalid-id', updateDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('vehicle-123', 'invalid-id', updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should convert date string to Date object in update', async () => {
@@ -286,11 +260,10 @@ describe('RemindersService', () => {
         dueDate: '2026-08-27',
       };
 
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(mockReminder);
       remindersRepo.update.mockResolvedValue(mockReminder);
 
-      await service.update('workspace-123', 'vehicle-123', 'reminder-123', updateDto);
+      await service.update('vehicle-123', 'reminder-123', updateDto);
 
       const updateCall = remindersRepo.update.mock.calls[0][1];
       if (updateCall.dueDate !== undefined) {
@@ -301,7 +274,6 @@ describe('RemindersService', () => {
 
   describe('complete', () => {
     it('should mark reminder as completed', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(mockReminder);
       remindersRepo.update.mockResolvedValue({
         ...mockReminder,
@@ -309,7 +281,7 @@ describe('RemindersService', () => {
         completedAt: new Date(),
       });
 
-      const result = await service.complete('workspace-123', 'vehicle-123', 'reminder-123');
+      await service.complete('vehicle-123', 'reminder-123');
 
       expect(remindersRepo.update).toHaveBeenCalledWith(
         'reminder-123',
@@ -321,34 +293,31 @@ describe('RemindersService', () => {
     });
 
     it('should throw ForbiddenException if reminder already completed', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         status: ReminderStatus.COMPLETED,
       });
 
-      await expect(
-        service.complete('workspace-123', 'vehicle-123', 'reminder-123'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.complete('vehicle-123', 'reminder-123')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw ForbiddenException if reminder not in vehicle', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         vehicleId: 'other-vehicle',
       });
 
-      await expect(
-        service.complete('workspace-123', 'vehicle-123', 'reminder-123'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.complete('vehicle-123', 'reminder-123')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw NotFoundException if reminder not found', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(null);
 
-      await expect(service.complete('workspace-123', 'vehicle-123', 'invalid-id')).rejects.toThrow(
+      await expect(service.complete('vehicle-123', 'invalid-id')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -356,14 +325,13 @@ describe('RemindersService', () => {
 
   describe('dismiss', () => {
     it('should mark reminder as dismissed', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(mockReminder);
       remindersRepo.update.mockResolvedValue({
         ...mockReminder,
         status: ReminderStatus.DISMISSED,
       });
 
-      const result = await service.dismiss('workspace-123', 'vehicle-123', 'reminder-123');
+      await service.dismiss('vehicle-123', 'reminder-123');
 
       expect(remindersRepo.update).toHaveBeenCalledWith(
         'reminder-123',
@@ -374,25 +342,23 @@ describe('RemindersService', () => {
     });
 
     it('should throw ForbiddenException if reminder already dismissed', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         status: ReminderStatus.DISMISSED,
       });
 
-      await expect(service.dismiss('workspace-123', 'vehicle-123', 'reminder-123')).rejects.toThrow(
+      await expect(service.dismiss('vehicle-123', 'reminder-123')).rejects.toThrow(
         ForbiddenException,
       );
     });
 
     it('should throw ForbiddenException if reminder not in vehicle', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         vehicleId: 'other-vehicle',
       });
 
-      await expect(service.dismiss('workspace-123', 'vehicle-123', 'reminder-123')).rejects.toThrow(
+      await expect(service.dismiss('vehicle-123', 'reminder-123')).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -400,33 +366,28 @@ describe('RemindersService', () => {
 
   describe('delete', () => {
     it('should delete reminder', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(mockReminder);
 
-      await service.delete('workspace-123', 'vehicle-123', 'reminder-123');
+      await service.delete('vehicle-123', 'reminder-123');
 
       expect(remindersRepo.delete).toHaveBeenCalledWith('reminder-123');
     });
 
     it('should throw ForbiddenException if reminder not in vehicle', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue({
         ...mockReminder,
         vehicleId: 'other-vehicle',
       });
 
-      await expect(service.delete('workspace-123', 'vehicle-123', 'reminder-123')).rejects.toThrow(
+      await expect(service.delete('vehicle-123', 'reminder-123')).rejects.toThrow(
         ForbiddenException,
       );
     });
 
     it('should throw NotFoundException if reminder not found', async () => {
-      (service as any).ensureVehicleBelongsToWorkspace = jest.fn().mockResolvedValue(undefined);
       remindersRepo.findById.mockResolvedValue(null);
 
-      await expect(service.delete('workspace-123', 'vehicle-123', 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.delete('vehicle-123', 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
