@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ErrorCodes } from '@common/exce
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { TimelineType } from '@prisma/client';
+import { Prisma, TimelineType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 
 import { CreateTimelineEventDto, TimelineQueryDto, UpdateTimelineEventDto } from './dto';
@@ -94,7 +94,7 @@ export class TimelineService {
     return event;
   }
 
-  async updateEvent(eventId: string, dto: UpdateTimelineEventDto, userId: string) {
+  async updateEvent(eventId: string, dto: UpdateTimelineEventDto) {
     const event = await this.timelineRepository.findById(eventId);
     if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
 
@@ -264,6 +264,45 @@ export class TimelineService {
       default:
         return base;
     }
+  }
+
+  async createMaintenanceServiceEvent(
+    params: {
+      vehicleId: string;
+      maintenanceIntervalId: string;
+      title: string;
+      mileage: number;
+      eventDate: Date;
+    },
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    const event = await this.timelineRepository.create(
+      {
+        vehicleId: params.vehicleId,
+        type: TimelineType.SERVICE,
+        title: params.title,
+        eventDate: params.eventDate,
+        mileage: params.mileage,
+        cost: null,
+        description: null,
+        serviceStationId: null,
+        service: {
+          category: 'MAINTENANCE',
+          works: [],
+          parts: [],
+          maintenanceIntervalId: params.maintenanceIntervalId,
+        },
+      },
+      tx,
+    );
+
+    await this.timelineRepository.createMileageLog(
+      params.vehicleId,
+      event.id,
+      params.mileage,
+      TimelineType.SERVICE,
+      tx,
+    );
   }
 
   // Private Methods

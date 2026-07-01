@@ -39,6 +39,7 @@ const mapServiceDetails = (service: Service) => {
     category: service.category,
     works: service.works,
     parts: service.parts,
+    maintenanceIntervalId: service.maintenanceIntervalId,
   };
 };
 

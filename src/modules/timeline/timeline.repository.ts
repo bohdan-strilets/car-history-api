@@ -76,7 +76,11 @@ export class TimelineRepository {
     return event ? mapTimelineEvent(event) : null;
   }
 
-  async create(data: CreateTimelineEventInput): Promise<MappedTimelineEvent> {
+  async create(
+    data: CreateTimelineEventInput,
+    tx?: Prisma.TransactionClient,
+  ): Promise<MappedTimelineEvent> {
+    const client = tx ?? this.prisma;
     const {
       refuel,
       charge,
@@ -90,7 +94,7 @@ export class TimelineRepository {
       ...eventData
     } = data;
 
-    const event = await this.prisma.timelineEvent.create({
+    const event = await client.timelineEvent.create({
       data: {
         ...eventData,
         ...(refuel && { refuel: { create: refuel } }),
@@ -150,17 +154,20 @@ export class TimelineRepository {
     eventId: string,
     mileage: number,
     source: MileageSource,
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    await this.prisma.mileageLog.create({
+    const client = tx ?? this.prisma;
+
+    await client.mileageLog.create({
       data: { vehicleId, eventId, mileage, source },
     });
 
-    const maxLog = await this.prisma.mileageLog.findFirst({
+    const maxLog = await client.mileageLog.findFirst({
       where: { vehicleId },
       orderBy: { mileage: 'desc' },
     });
 
-    await this.prisma.vehicle.update({
+    await client.vehicle.update({
       where: { id: vehicleId },
       data: { currentMileage: maxLog?.mileage ?? mileage },
     });

@@ -1,5 +1,6 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { RemindersService } from '@modules/reminders';
+import { TimelineService } from '@modules/timeline';
 import { Injectable } from '@nestjs/common';
 import { MaintenanceInterval, MaintenanceStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -17,6 +18,7 @@ export class MaintenanceIntervalsService {
   constructor(
     private readonly maintenanceIntervalsRepo: MaintenanceIntervalsRepository,
     private readonly remindersService: RemindersService,
+    private readonly timelineService: TimelineService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -193,7 +195,7 @@ export class MaintenanceIntervalsService {
     workspaceId: string,
     vehicleId: string,
     id: string,
-    currentMileage: number,
+    dto: { mileage: number; date: Date },
   ): Promise<MaintenanceIntervalResponseDto> {
     await this.ensureVehicleBelongsToWorkspace(workspaceId, vehicleId);
     const interval = await this.getById(id);
@@ -202,24 +204,33 @@ export class MaintenanceIntervalsService {
       throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
     }
 
-    const now = new Date();
-
     const { nextServiceMileage, nextServiceDate } = this.calculateNext({
       intervalKm: interval.intervalKm,
       intervalMonths: interval.intervalMonths,
-      lastServiceMileage: currentMileage,
-      lastServiceDate: now,
+      lastServiceMileage: dto.mileage,
+      lastServiceDate: dto.date,
     });
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await this.maintenanceIntervalsRepo.update(
         id,
         {
-          lastServiceMileage: currentMileage,
-          lastServiceDate: now,
+          lastServiceMileage: dto.mileage,
+          lastServiceDate: dto.date,
           nextServiceMileage,
           nextServiceDate,
           status: MaintenanceStatus.ACTIVE,
+        },
+        tx,
+      );
+
+      await this.timelineService.createMaintenanceServiceEvent(
+        {
+          vehicleId,
+          maintenanceIntervalId: id,
+          title: interval.title,
+          mileage: dto.mileage,
+          eventDate: dto.date,
         },
         tx,
       );

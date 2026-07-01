@@ -16,6 +16,7 @@ import {
 import {
   CreateMaintenanceIntervalDto,
   MaintenanceIntervalResponseDto,
+  MarkMaintenanceDoneDto,
   UpdateMaintenanceIntervalDto,
 } from './dto';
 import { MaintenanceIntervalsService } from './maintenance-intervals.service';
@@ -79,9 +80,12 @@ export class MaintenanceIntervalsController {
     @Param('workspaceId') workspaceId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('id') id: string,
-    @Body('currentMileage') currentMileage: number,
+    @Body() dto: MarkMaintenanceDoneDto,
   ): Promise<MaintenanceIntervalResponseDto> {
-    return this.maintenanceIntervalsService.markAsDone(workspaceId, vehicleId, id, currentMileage);
+    return this.maintenanceIntervalsService.markAsDone(workspaceId, vehicleId, id, {
+      mileage: dto.mileage,
+      date: new Date(dto.date),
+    });
   }
 
   @Delete(':id')

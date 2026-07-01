@@ -54,6 +54,7 @@ export type CreateTimelineEventInput = {
     category: ServiceCategory;
     works: Prisma.InputJsonValue;
     parts: Prisma.InputJsonValue;
+    maintenanceIntervalId?: string | null;
   };
   document?: Prisma.DocumentCreateWithoutEventInput;
   expense?: Prisma.ExpenseCreateWithoutEventInput;
