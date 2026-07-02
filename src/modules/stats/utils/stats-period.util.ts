@@ -5,8 +5,7 @@ import {
   DAY_BOUNDARY,
 } from '@common/constants';
 
-import { StatsPeriod } from '../dto';
-import { CalendarYearRange, PeriodRange } from '../types';
+import { CalendarYearRange, PeriodRange, StatsPeriod } from '../types';
 
 const parseLocalDate = (dateStr?: string): Date => {
   if (!dateStr) return new Date();

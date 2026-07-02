@@ -9,3 +9,5 @@ export type {
   PeriodRange,
   VehicleStatsInfo,
 } from './stats.types';
+
+export { StatsPeriod } from './stats.enums';

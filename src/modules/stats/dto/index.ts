@@ -1,1 +1,1 @@
-export { StatsPeriod, StatsQueryDto } from './stats-query.dto';
+export { StatsQueryDto } from './stats-query.dto';

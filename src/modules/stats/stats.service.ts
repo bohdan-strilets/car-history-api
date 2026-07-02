@@ -5,9 +5,9 @@ import {
 } from '@common/constants';
 import { Injectable } from '@nestjs/common';
 
-import { StatsPeriod, StatsQueryDto } from './dto';
+import { StatsQueryDto } from './dto';
 import { StatsRepository } from './stats.repository';
-import { VehicleStatsInfo } from './types';
+import { StatsPeriod, VehicleStatsInfo } from './types';
 import {
   calculateChangePercent,
   calculateFuelConsumptionTrend,

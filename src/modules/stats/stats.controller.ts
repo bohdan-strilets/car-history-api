@@ -1,5 +1,5 @@
 import { VehicleAccess } from '@common/decorators';
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 
 import { StatsQueryDto } from './dto';
 import { StatsService } from './stats.service';
@@ -10,10 +10,7 @@ export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
   @Get()
-  getVehicleStats(
-    @Param('vehicleId', ParseUUIDPipe) vehicleId: string,
-    @Query() query: StatsQueryDto,
-  ) {
+  getVehicleStats(@Param('vehicleId') vehicleId: string, @Query() query: StatsQueryDto) {
     return this.statsService.getVehicleStats(vehicleId, query);
   }
 }

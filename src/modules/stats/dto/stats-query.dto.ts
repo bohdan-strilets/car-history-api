@@ -1,11 +1,6 @@
 import { IsDateString, IsEnum, IsOptional } from 'class-validator';
 
-export enum StatsPeriod {
-  MONTH = 'month',
-  QUARTER = 'quarter',
-  YEAR = 'year',
-  ALL = 'all',
-}
+import { StatsPeriod } from '../types';
 
 export class StatsQueryDto {
   @IsOptional()
