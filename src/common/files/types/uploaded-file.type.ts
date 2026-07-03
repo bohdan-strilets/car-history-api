@@ -4,3 +4,8 @@ export interface UploadedFile {
   size: number;
   buffer: Buffer;
 }
+
+export interface ValidateFileParams {
+  allowedMimeTypes: string[];
+  maxSizeBytes: number;
+}

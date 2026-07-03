@@ -3,6 +3,7 @@ import { AiModule } from '@modules/ai';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { MaintenanceModule } from '@modules/maintenance';
+import { MediaModule } from '@modules/media';
 import { MilestonesModule } from '@modules/milestones';
 import { NotificationsModule } from '@modules/notifications';
 import { RemindersModule } from '@modules/reminders';
@@ -38,6 +39,7 @@ import { PrismaModule } from './prisma';
     NotificationsModule,
     ScheduleModule.forRoot(),
     StatsModule,
+    MediaModule,
     AiModule,
   ],
 })

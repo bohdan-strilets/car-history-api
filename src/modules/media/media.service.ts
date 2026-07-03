@@ -1,0 +1,208 @@
+import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { FileValidatorService, UploadedFile } from '@common/files';
+import { AppConfigService } from '@config/config.service';
+import { Injectable } from '@nestjs/common';
+import { MediaCategory, MediaEntity, MediaType, Role } from '@prisma/client';
+import { PrismaService } from '@prisma/prisma.service';
+
+import { CloudinaryService, CloudinaryUploadResult } from './cloudinary';
+import { UploadMediaDto } from './dto';
+import { buildCloudinaryFolder } from './lib';
+import { MediaRepository } from './media.repository';
+import { CreateMediaInput } from './types';
+
+@Injectable()
+export class MediaService {
+  constructor(
+    private readonly mediaRepository: MediaRepository,
+    private readonly cloudinary: CloudinaryService,
+    private readonly fileValidator: FileValidatorService,
+    private readonly config: AppConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  async upload(userId: string, file: UploadedFile, dto: UploadMediaDto) {
+    const isVideo = file.mimetype.startsWith('video/');
+
+    this.fileValidator.validate(file, {
+      allowedMimeTypes: isVideo
+        ? this.config.mediaAllowedVideoMimeTypes
+        : this.config.mediaAllowedImageMimeTypes,
+      maxSizeBytes: this.config.mediaMaxFileSizeMb * 1024 * 1024,
+    });
+    await this.fileValidator.scan(file);
+
+    const context = await this.mediaRepository.resolveEntityContext(dto.entityType, dto.entityId);
+    if (!context) {
+      throw new NotFoundException(ErrorCodes.Media.ENTITY_NOT_FOUND);
+    }
+
+    await this.assertAccess(userId, dto.entityType, context.workspaceId);
+
+    const folder = buildCloudinaryFolder({
+      entityType: dto.entityType,
+      entityId: dto.entityId,
+      category: dto.category,
+      workspaceId: context.workspaceId ?? undefined,
+      vehicleId: context.vehicleId ?? undefined,
+    });
+
+    const uploadResult = await this.cloudinary.upload(file, folder);
+
+    const input: CreateMediaInput = {
+      uploadedBy: userId,
+      cloudinaryId: uploadResult.publicId,
+      cloudinaryUrl: uploadResult.url,
+      type: isVideo ? MediaType.VIDEO : MediaType.IMAGE,
+      mimeType: file.mimetype,
+      originalName: file.originalname,
+      storageKey: uploadResult.publicId,
+      sizeBytes: uploadResult.bytes,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      durationSeconds: uploadResult.durationSeconds,
+      variants: this.buildVariantsInput(uploadResult),
+      usage: {
+        entityType: dto.entityType,
+        entityId: dto.entityId,
+        category: dto.category,
+        isPrimary: dto.isPrimary ?? false,
+      },
+    };
+
+    const media = await this.mediaRepository.create(input);
+
+    if (dto.isPrimary) {
+      await this.syncPrimary(dto.entityType, dto.entityId, media.id, media.cloudinaryUrl);
+    }
+
+    return media;
+  }
+
+  async delete(userId: string, mediaId: string): Promise<void> {
+    const media = await this.mediaRepository.findById(mediaId);
+    if (!media) {
+      throw new NotFoundException(ErrorCodes.Media.NOT_FOUND);
+    }
+
+    if (media.uploadedBy !== userId) {
+      const usage = media.usages[0];
+      const context = usage
+        ? await this.mediaRepository.resolveEntityContext(usage.entityType, usage.entityId)
+        : null;
+
+      const hasRole = context?.workspaceId
+        ? await this.hasWorkspaceRole(userId, context.workspaceId, [Role.OWNER, Role.ADMIN])
+        : false;
+
+      if (!hasRole) {
+        throw new ForbiddenException(ErrorCodes.Media.ACCESS_DENIED);
+      }
+    }
+
+    await this.cloudinary.destroy(
+      media.cloudinaryId,
+      media.type === MediaType.VIDEO ? 'video' : 'image',
+    );
+    await this.mediaRepository.delete(mediaId);
+  }
+
+  async getGallery(vehicleId: string, category?: MediaCategory) {
+    return this.mediaRepository.findByVehicleGallery(vehicleId, category);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private async assertAccess(
+    userId: string,
+    entityType: MediaEntity,
+    workspaceId: string | null,
+  ): Promise<void> {
+    if (entityType === MediaEntity.USER) {
+      return;
+    }
+
+    if (!workspaceId) {
+      throw new NotFoundException(ErrorCodes.Media.ENTITY_NOT_FOUND);
+    }
+
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+    });
+
+    if (!member) {
+      throw new ForbiddenException(ErrorCodes.Media.ACCESS_DENIED);
+    }
+  }
+
+  private async hasWorkspaceRole(
+    userId: string,
+    workspaceId: string,
+    roles: Role[],
+  ): Promise<boolean> {
+    const member = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId, userId } },
+    });
+
+    return !!member && roles.includes(member.role);
+  }
+
+  private async syncPrimary(
+    entityType: MediaEntity,
+    entityId: string,
+    mediaId: string,
+    cloudinaryUrl: string,
+  ): Promise<void> {
+    if (entityType === MediaEntity.USER) {
+      await this.prisma.user.update({
+        where: { id: entityId },
+        data: { avatarUrl: cloudinaryUrl },
+      });
+      return;
+    }
+
+    if (entityType === MediaEntity.VEHICLE) {
+      await this.prisma.vehicle.update({
+        where: { id: entityId },
+        data: { primaryPhotoId: mediaId },
+      });
+    }
+  }
+
+  private buildVariantsInput(result: CloudinaryUploadResult): CreateMediaInput['variants'] {
+    const variants: CreateMediaInput['variants'] = [
+      {
+        type: 'ORIGINAL',
+        cloudinaryUrl: result.url,
+        storageKey: result.publicId,
+        width: result.width,
+        height: result.height,
+        sizeBytes: result.bytes,
+      },
+    ];
+
+    const entries: Array<
+      [CreateMediaInput['variants'][number]['type'], typeof result.variants.thumbnail]
+    > = [
+      ['THUMBNAIL', result.variants.thumbnail],
+      ['SMALL', result.variants.small],
+      ['MEDIUM', result.variants.medium],
+      ['LARGE', result.variants.large],
+    ];
+
+    for (const [type, variant] of entries) {
+      if (variant) {
+        variants.push({
+          type,
+          cloudinaryUrl: variant.url,
+          storageKey: result.publicId,
+          width: variant.width,
+          height: variant.height,
+          sizeBytes: variant.bytes,
+        });
+      }
+    }
+
+    return variants;
+  }
+}

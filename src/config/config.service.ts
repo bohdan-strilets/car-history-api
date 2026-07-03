@@ -163,23 +163,43 @@ export class AppConfigService {
       .filter(Boolean);
   }
 
-  get uploadStoragePath() {
-    return this.config.get('UPLOAD_STORAGE_PATH', { infer: true });
+  get enableAntivirusScan() {
+    return this.config.get('ENABLE_ANTIVIRUS_SCAN', { infer: true });
   }
 
-  get uploadMaxFileSizeMb() {
-    return this.config.get('UPLOAD_MAX_FILE_SIZE_MB', { infer: true });
+  get cloudinaryCloudName() {
+    return this.config.get('CLOUDINARY_CLOUD_NAME', { infer: true });
   }
 
-  get uploadAllowedMimeTypes() {
+  get cloudinaryApiKey() {
+    return this.config.get('CLOUDINARY_API_KEY', { infer: true });
+  }
+
+  get cloudinaryApiSecret() {
+    return this.config.get('CLOUDINARY_API_SECRET', { infer: true });
+  }
+
+  get mediaMaxFileSizeMb() {
+    return this.config.get('MEDIA_MAX_FILE_SIZE_MB', { infer: true });
+  }
+
+  get mediaAllowedImageMimeTypes() {
     return this.config
-      .get('UPLOAD_ALLOWED_MIME_TYPES', { infer: true })
+      .get('MEDIA_ALLOWED_IMAGE_MIME_TYPES', { infer: true })
       .split(',')
       .map((mimeType) => mimeType.trim().toLowerCase())
       .filter(Boolean);
   }
 
-  get enableAntivirusScan() {
-    return this.config.get('ENABLE_ANTIVIRUS_SCAN', { infer: true });
+  get mediaAllowedVideoMimeTypes() {
+    return this.config
+      .get('MEDIA_ALLOWED_VIDEO_MIME_TYPES', { infer: true })
+      .split(',')
+      .map((mimeType) => mimeType.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  get mediaMaxVideoDurationSeconds() {
+    return this.config.get('MEDIA_MAX_VIDEO_DURATION_SECONDS', { infer: true });
   }
 }

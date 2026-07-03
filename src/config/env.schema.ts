@@ -46,10 +46,18 @@ export const envSchema = z.object({
     .string()
     .default('Origin,Content-Type,Accept,Authorization,X-CSRF-Token,X-Request-Id,X-Correlation-Id'),
 
-  UPLOAD_STORAGE_PATH: z.string().default('../private_uploads'),
-  UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().int().min(1).max(20).default(5),
-  UPLOAD_ALLOWED_MIME_TYPES: z.string().default('image/jpeg,image/png,image/webp,image/gif'),
   ENABLE_ANTIVIRUS_SCAN: z.coerce.boolean().default(false),
+
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
+
+  MEDIA_MAX_FILE_SIZE_MB: z.coerce.number().int().min(1).max(100).default(20),
+  MEDIA_ALLOWED_IMAGE_MIME_TYPES: z
+    .string()
+    .default('image/jpeg,image/png,image/webp,image/heic,image/heif'),
+  MEDIA_ALLOWED_VIDEO_MIME_TYPES: z.string().default('video/mp4,video/quicktime,video/webm'),
+  MEDIA_MAX_VIDEO_DURATION_SECONDS: z.coerce.number().int().min(1).default(120),
 });
 
 export type Env = z.infer<typeof envSchema>;
