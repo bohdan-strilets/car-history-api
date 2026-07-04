@@ -6,7 +6,12 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(config: AppConfigService) {
-    const adapter = new PrismaPg({ connectionString: config.databaseUrl });
+    const adapter = new PrismaPg({
+      connectionString: config.databaseUrl,
+      max: config.databasePoolMax,
+      idleTimeoutMillis: config.databasePoolIdleTimeoutMs,
+      connectionTimeoutMillis: config.databasePoolConnectionTimeoutMs,
+    });
     super({ adapter });
   }
 

@@ -31,6 +31,18 @@ export class AppConfigService {
     return this.config.get('SITE_NAME', { infer: true });
   }
 
+  get databasePoolMax() {
+    return this.config.get('DATABASE_POOL_MAX', { infer: true });
+  }
+
+  get databasePoolIdleTimeoutMs() {
+    return this.config.get('DATABASE_POOL_IDLE_TIMEOUT_MS', { infer: true });
+  }
+
+  get databasePoolConnectionTimeoutMs() {
+    return this.config.get('DATABASE_POOL_CONNECTION_TIMEOUT_MS', { infer: true });
+  }
+
   get isDevelopment() {
     return this.nodeEnv === 'development';
   }

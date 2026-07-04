@@ -10,6 +10,10 @@ export const envSchema = z.object({
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   SITE_NAME: z.string().default('Arvino'),
 
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(20),
+  DATABASE_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().default(30000),
+  DATABASE_POOL_CONNECTION_TIMEOUT_MS: z.coerce.number().int().default(10000),
+
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(14).default(12),
   TOKEN_BYTES: z.coerce.number().int().min(32).max(64).default(32),
 

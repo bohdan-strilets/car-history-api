@@ -24,10 +24,11 @@ export class CloudinaryService {
     const resourceType = isVideo ? 'video' : 'image';
 
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
+      const stream = cloudinary.uploader.upload_chunked_stream(
         {
           folder,
           resource_type: resourceType,
+          chunk_size: 6 * 1024 * 1024,
           eager: isVideo
             ? undefined
             : EAGER_TRANSFORMATIONS.map(({ transformation: _transformation, ...t }) => t),
@@ -35,7 +36,11 @@ export class CloudinaryService {
         },
         (error: UploadApiErrorResponse | undefined, response?: UploadApiResponse) => {
           if (error || !response) {
-            return reject(error);
+            return reject(
+              error instanceof Error
+                ? error
+                : new Error(error?.message ?? 'Cloudinary upload failed'),
+            );
           }
           resolve(response);
         },
