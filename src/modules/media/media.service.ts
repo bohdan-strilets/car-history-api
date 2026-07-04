@@ -1,4 +1,9 @@
-import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import {
+  BadRequestException,
+  ErrorCodes,
+  ForbiddenException,
+  NotFoundException,
+} from '@common/exceptions';
 import { FileValidatorService, UploadedFile } from '@common/files';
 import { AppConfigService } from '@config/config.service';
 import { Injectable } from '@nestjs/common';
@@ -71,6 +76,10 @@ export class MediaService {
       },
     };
 
+    if (dto.isPrimary) {
+      await this.mediaRepository.clearPrimaryForEntity(dto.entityType, dto.entityId);
+    }
+
     const media = await this.mediaRepository.create(input);
 
     if (dto.isPrimary) {
@@ -111,6 +120,42 @@ export class MediaService {
   async getGallery(vehicleId: string, category?: MediaCategory) {
     const items = await this.mediaRepository.findByVehicleGallery(vehicleId, category);
     return items.map(mapMedia);
+  }
+
+  async setPrimary(userId: string, mediaId: string) {
+    const media = await this.mediaRepository.findById(mediaId);
+    if (!media) {
+      throw new NotFoundException(ErrorCodes.Media.NOT_FOUND);
+    }
+
+    const usage = media.usages[0];
+    if (!usage) {
+      throw new NotFoundException(ErrorCodes.Media.NOT_FOUND);
+    }
+
+    if (usage.entityType !== MediaEntity.VEHICLE) {
+      throw new BadRequestException(ErrorCodes.Media.INVALID_ENTITY_TYPE);
+    }
+
+    const context = await this.mediaRepository.resolveEntityContext(
+      usage.entityType,
+      usage.entityId,
+    );
+    if (!context?.workspaceId) {
+      throw new NotFoundException(ErrorCodes.Media.ENTITY_NOT_FOUND);
+    }
+
+    await this.assertAccess(userId, usage.entityType, context.workspaceId);
+
+    await this.mediaRepository.clearPrimaryForEntity(usage.entityType, usage.entityId);
+    await this.mediaRepository.setUsagePrimary(media.id, true);
+    await this.prisma.vehicle.update({
+      where: { id: usage.entityId },
+      data: { primaryPhotoId: media.id },
+    });
+
+    const updated = await this.mediaRepository.findById(mediaId);
+    return mapMedia(updated!);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

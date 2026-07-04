@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -40,5 +41,10 @@ export class MediaController {
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.mediaService.delete(userId, id);
+  }
+
+  @Patch(':id/primary')
+  setPrimary(@CurrentUserId() userId: string, @Param('id') id: string) {
+    return this.mediaService.setPrimary(userId, id);
   }
 }

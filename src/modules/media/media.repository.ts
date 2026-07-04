@@ -164,4 +164,18 @@ export class MediaRepository {
   async delete(mediaId: string): Promise<void> {
     await this.prisma.media.delete({ where: { id: mediaId } });
   }
+
+  async clearPrimaryForEntity(entityType: MediaEntity, entityId: string): Promise<void> {
+    await this.prisma.mediaUsage.updateMany({
+      where: { entityType, entityId, isPrimary: true },
+      data: { isPrimary: false },
+    });
+  }
+
+  async setUsagePrimary(mediaId: string, isPrimary: boolean): Promise<void> {
+    await this.prisma.mediaUsage.updateMany({
+      where: { mediaId },
+      data: { isPrimary },
+    });
+  }
 }

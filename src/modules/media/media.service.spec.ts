@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@common/exceptions';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { FileValidatorService, UploadedFile } from '@common/files';
 import { AppConfigService } from '@config/config.service';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -94,6 +94,8 @@ describe('MediaService', () => {
             delete: jest.fn(),
             findById: jest.fn(),
             findByVehicleGallery: jest.fn(),
+            clearPrimaryForEntity: jest.fn(),
+            setUsagePrimary: jest.fn(),
           },
         },
         {
@@ -376,6 +378,75 @@ describe('MediaService', () => {
         'vehicle-1',
         MediaCategory.EXTERIOR,
       );
+    });
+  });
+
+  // ─── setPrimary ───────────────────────────────────────────────────────────
+
+  describe('setPrimary', () => {
+    it('should set media as primary and sync vehicle.primaryPhotoId', async () => {
+      mediaRepository.findById.mockResolvedValue(mockMedia as any);
+      mediaRepository.resolveEntityContext.mockResolvedValue({
+        workspaceId: 'ws-1',
+        vehicleId: 'vehicle-1',
+      });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: Role.MEMBER });
+
+      await service.setPrimary('user-123', 'media-123');
+
+      expect(mediaRepository.clearPrimaryForEntity).toHaveBeenCalledWith(
+        MediaEntity.VEHICLE,
+        'vehicle-1',
+      );
+      expect(mediaRepository.setUsagePrimary).toHaveBeenCalledWith('media-123', true);
+      expect(prisma.vehicle.update).toHaveBeenCalledWith({
+        where: { id: 'vehicle-1' },
+        data: { primaryPhotoId: 'media-123' },
+      });
+    });
+
+    it('should throw NotFoundException if media not found', async () => {
+      mediaRepository.findById.mockResolvedValue(null);
+
+      await expect(service.setPrimary('user-123', 'invalid-id')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if entityType is not VEHICLE', async () => {
+      mediaRepository.findById.mockResolvedValue({
+        ...mockMedia,
+        usages: [
+          {
+            ...mockMedia.usages[0],
+            entityType: MediaEntity.USER,
+          },
+        ],
+      } as any);
+
+      await expect(service.setPrimary('user-123', 'media-123')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mediaRepository.clearPrimaryForEntity).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException if user is not workspace member', async () => {
+      mediaRepository.findById.mockResolvedValue(mockMedia as any);
+      mediaRepository.resolveEntityContext.mockResolvedValue({
+        workspaceId: 'ws-1',
+        vehicleId: 'vehicle-1',
+      });
+      prisma.workspaceMember.findUnique.mockResolvedValue(null);
+
+      await expect(service.setPrimary('other-user', 'media-123')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mediaRepository.clearPrimaryForEntity).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if entity context cannot be resolved', async () => {
+      mediaRepository.findById.mockResolvedValue(mockMedia as any);
+      mediaRepository.resolveEntityContext.mockResolvedValue(null);
+
+      await expect(service.setPrimary('user-123', 'media-123')).rejects.toThrow(NotFoundException);
     });
   });
 });
