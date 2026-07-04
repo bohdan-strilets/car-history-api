@@ -8,6 +8,7 @@ import { PrismaService } from '@prisma/prisma.service';
 import { CloudinaryService, CloudinaryUploadResult } from './cloudinary';
 import { UploadMediaDto } from './dto';
 import { buildCloudinaryFolder } from './lib';
+import { mapMedia } from './mappers';
 import { MediaRepository } from './media.repository';
 import { CreateMediaInput } from './types';
 
@@ -76,7 +77,7 @@ export class MediaService {
       await this.syncPrimary(dto.entityType, dto.entityId, media.id, media.cloudinaryUrl);
     }
 
-    return media;
+    return mapMedia(media);
   }
 
   async delete(userId: string, mediaId: string): Promise<void> {
@@ -108,7 +109,8 @@ export class MediaService {
   }
 
   async getGallery(vehicleId: string, category?: MediaCategory) {
-    return this.mediaRepository.findByVehicleGallery(vehicleId, category);
+    const items = await this.mediaRepository.findByVehicleGallery(vehicleId, category);
+    return items.map(mapMedia);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
