@@ -8,6 +8,7 @@ import {
   ServiceCategory,
   SoldTo,
   TimelineType,
+  TireChangeType,
   TripPurpose,
 } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -206,6 +207,9 @@ export class CreateTimelineEventDto {
   declare expenseCategory?: ExpenseCategory;
 
   // ─── TIRE_CHANGE ──────────────────────────────────────────────────────────
+  @ValidateIf((o) => o.type === TimelineType.TIRE_CHANGE)
+  @IsEnum(TireChangeType)
+  declare changeType?: TireChangeType;
 
   @ValidateIf((o) => o.type === TimelineType.TIRE_CHANGE)
   @IsString()

@@ -1,5 +1,5 @@
 import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch } from '@nestjs/common';
 
 import { TireResponseDto, UpdateTireDto } from './dto';
 import { TiresService } from './tires.service';
@@ -24,5 +24,10 @@ export class TireController {
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@CurrentUserId() userId: string, @Param('id') id: string): Promise<void> {
     return this.tiresService.delete(userId, id);
+  }
+
+  @Get(':id/history')
+  getHistory(@Param('id') id: string) {
+    return this.tiresService.getHistory(id);
   }
 }

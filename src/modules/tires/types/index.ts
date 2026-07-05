@@ -1,1 +1,1 @@
-export type { CreateTireInput, UpdateTireInput } from './tire.types';
+export type { CreateTireInput, TireHistory, TirePeriod, UpdateTireInput } from './tire.types';

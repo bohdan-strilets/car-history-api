@@ -1,11 +1,12 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Tire, TireStatus } from '@prisma/client';
+import { Prisma, Tire, TireChangeType, TireStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateTireDto, TireResponseDto, UpdateTireDto } from './dto';
 import { toTireResponse } from './mappers';
 import { TiresRepository } from './tires.repository';
+import { TireHistory, TirePeriod } from './types';
 
 @Injectable()
 export class TiresService {
@@ -115,6 +116,77 @@ export class TiresService {
 
   async unmount(tireId: string, tx?: Prisma.TransactionClient): Promise<void> {
     await this.tiresRepo.update(tireId, { status: TireStatus.STORED }, tx);
+  }
+
+  async getHistory(id: string): Promise<{ tire: TireResponseDto; history: TireHistory }> {
+    const tire = await this.getById(id);
+    const changes = await this.tiresRepo.findTireChangesByTireId(id);
+
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: tire.vehicleId },
+      select: { currentMileage: true },
+    });
+    const currentMileage = vehicle?.currentMileage ?? 0;
+
+    const periods: TirePeriod[] = [];
+    let pendingInstall: { eventDate: Date; mileage: number | null } | null = null;
+
+    for (const change of changes) {
+      if (change.changeType === TireChangeType.INSTALL) {
+        pendingInstall = { eventDate: change.eventDate, mileage: change.installedMileage };
+        continue;
+      }
+
+      if (change.changeType === TireChangeType.REMOVE && pendingInstall) {
+        const installedMileage = pendingInstall.mileage;
+        const removedMileage = change.removedMileage ?? change.mileage;
+        const kmDriven = installedMileage != null ? removedMileage - installedMileage : null;
+        const daysDriven = Math.round(
+          (change.eventDate.getTime() - pendingInstall.eventDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        periods.push({
+          installedAt: pendingInstall.eventDate.toISOString(),
+          installedMileage,
+          removedAt: (change.removedDate ?? change.eventDate).toISOString(),
+          removedMileage,
+          kmDriven,
+          daysDriven,
+          isOngoing: false,
+        });
+
+        pendingInstall = null;
+      }
+    }
+
+    if (pendingInstall) {
+      const installedMileage = pendingInstall.mileage;
+      const kmDriven = installedMileage != null ? currentMileage - installedMileage : null;
+      const daysDriven = Math.round(
+        (Date.now() - pendingInstall.eventDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      periods.push({
+        installedAt: pendingInstall.eventDate.toISOString(),
+        installedMileage,
+        removedAt: null,
+        removedMileage: null,
+        kmDriven,
+        daysDriven,
+        isOngoing: true,
+      });
+    }
+
+    const totalKmDriven = periods.reduce((sum, p) => sum + (p.kmDriven ?? 0), 0);
+
+    return {
+      tire: toTireResponse(tire),
+      history: {
+        periods,
+        totalKmDriven,
+        totalMountCount: periods.length,
+      },
+    };
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────

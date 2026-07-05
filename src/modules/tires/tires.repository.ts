@@ -57,4 +57,21 @@ export class TiresRepository {
   async delete(id: string): Promise<void> {
     await this.prisma.tire.delete({ where: { id } });
   }
+
+  async findTireChangesByTireId(tireId: string) {
+    const changes = await this.prisma.tireChange.findMany({
+      where: { tireId },
+      include: { event: { select: { eventDate: true, mileage: true } } },
+      orderBy: { event: { eventDate: 'asc' } },
+    });
+
+    return changes.map((c) => ({
+      eventDate: c.event.eventDate,
+      mileage: c.event.mileage,
+      changeType: c.changeType,
+      installedMileage: c.installedMileage,
+      removedMileage: c.removedMileage,
+      removedDate: c.removedDate,
+    }));
+  }
 }

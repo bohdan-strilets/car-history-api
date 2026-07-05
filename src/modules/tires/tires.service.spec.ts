@@ -1,6 +1,6 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Tire, TireStatus, TireType } from '@prisma/client';
+import { Tire, TireChangeType, TireStatus, TireType } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateTireDto, UpdateTireDto } from './dto';
@@ -51,6 +51,7 @@ describe('TiresService', () => {
             findAllByVehicleId: jest.fn(),
             findById: jest.fn(),
             findMountedByVehicleId: jest.fn(),
+            findTireChangesByTireId: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
@@ -295,6 +296,159 @@ describe('TiresService', () => {
       await service.unmount('tire-123', tx);
 
       expect(tiresRepo.update).toHaveBeenCalledWith('tire-123', { status: TireStatus.STORED }, tx);
+    });
+  });
+
+  // ─── getHistory ───────────────────────────────────────────────────────────
+
+  describe('getHistory', () => {
+    it('should return empty history when tire has no changes', async () => {
+      tiresRepo.findById.mockResolvedValue(mockTire);
+      tiresRepo.findTireChangesByTireId.mockResolvedValue([]);
+      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 50000 });
+
+      const result = await service.getHistory('tire-123');
+
+      expect(result.history.periods).toHaveLength(0);
+      expect(result.history.totalKmDriven).toBe(0);
+      expect(result.history.totalMountCount).toBe(0);
+    });
+
+    it('should build a completed period from install + remove pair', async () => {
+      tiresRepo.findById.mockResolvedValue(mockTire);
+      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 60000 });
+      tiresRepo.findTireChangesByTireId.mockResolvedValue([
+        {
+          eventDate: new Date('2026-01-01'),
+          mileage: 40000,
+          changeType: TireChangeType.INSTALL,
+          installedMileage: 40000,
+          removedMileage: null,
+          removedDate: null,
+        },
+        {
+          eventDate: new Date('2026-04-01'),
+          mileage: 45000,
+          changeType: TireChangeType.REMOVE,
+          installedMileage: null,
+          removedMileage: 45000,
+          removedDate: new Date('2026-04-01'),
+        },
+      ]);
+
+      const result = await service.getHistory('tire-123');
+
+      expect(result.history.periods).toHaveLength(1);
+      expect(result.history.periods[0]).toMatchObject({
+        installedMileage: 40000,
+        removedMileage: 45000,
+        kmDriven: 5000,
+        isOngoing: false,
+      });
+      expect(result.history.totalKmDriven).toBe(5000);
+      expect(result.history.totalMountCount).toBe(1);
+    });
+
+    it('should build an ongoing period using current vehicle mileage', async () => {
+      tiresRepo.findById.mockResolvedValue({ ...mockTire, status: TireStatus.MOUNTED });
+      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 70000 });
+      tiresRepo.findTireChangesByTireId.mockResolvedValue([
+        {
+          eventDate: new Date('2026-01-01'),
+          mileage: 60000,
+          changeType: TireChangeType.INSTALL,
+          installedMileage: 60000,
+          removedMileage: null,
+          removedDate: null,
+        },
+      ]);
+
+      const result = await service.getHistory('tire-123');
+
+      expect(result.history.periods).toHaveLength(1);
+      expect(result.history.periods[0]).toMatchObject({
+        installedMileage: 60000,
+        removedAt: null,
+        removedMileage: null,
+        kmDriven: 10000,
+        isOngoing: true,
+      });
+      expect(result.history.totalKmDriven).toBe(10000);
+    });
+
+    it('should handle multiple mount/unmount cycles', async () => {
+      tiresRepo.findById.mockResolvedValue(mockTire);
+      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 80000 });
+      tiresRepo.findTireChangesByTireId.mockResolvedValue([
+        {
+          eventDate: new Date('2026-01-01'),
+          mileage: 30000,
+          changeType: TireChangeType.INSTALL,
+          installedMileage: 30000,
+          removedMileage: null,
+          removedDate: null,
+        },
+        {
+          eventDate: new Date('2026-03-01'),
+          mileage: 35000,
+          changeType: TireChangeType.REMOVE,
+          installedMileage: null,
+          removedMileage: 35000,
+          removedDate: new Date('2026-03-01'),
+        },
+        {
+          eventDate: new Date('2026-06-01'),
+          mileage: 40000,
+          changeType: TireChangeType.INSTALL,
+          installedMileage: 40000,
+          removedMileage: null,
+          removedDate: null,
+        },
+        {
+          eventDate: new Date('2026-09-01'),
+          mileage: 47000,
+          changeType: TireChangeType.REMOVE,
+          installedMileage: null,
+          removedMileage: 47000,
+          removedDate: new Date('2026-09-01'),
+        },
+      ]);
+
+      const result = await service.getHistory('tire-123');
+
+      expect(result.history.periods).toHaveLength(2);
+      expect(result.history.totalMountCount).toBe(2);
+      expect(result.history.totalKmDriven).toBe(5000 + 7000);
+    });
+
+    it('should still create a period when installedMileage is unknown', async () => {
+      tiresRepo.findById.mockResolvedValue({ ...mockTire, status: TireStatus.MOUNTED });
+      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 90000 });
+      tiresRepo.findTireChangesByTireId.mockResolvedValue([
+        {
+          eventDate: new Date('2026-01-01'),
+          mileage: 85000,
+          changeType: TireChangeType.INSTALL,
+          installedMileage: null,
+          removedMileage: null,
+          removedDate: null,
+        },
+      ]);
+
+      const result = await service.getHistory('tire-123');
+
+      expect(result.history.periods).toHaveLength(1);
+      expect(result.history.periods[0]).toMatchObject({
+        installedMileage: null,
+        kmDriven: null,
+        isOngoing: true,
+      });
+    });
+
+    it('should throw NotFoundException if tire not found', async () => {
+      tiresRepo.findById.mockResolvedValue(null);
+
+      await expect(service.getHistory('invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

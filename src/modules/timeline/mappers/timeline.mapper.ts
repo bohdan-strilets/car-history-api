@@ -62,6 +62,7 @@ const mapExpenseDetails = (expense: Expense) => {
 const mapTireChangeDetails = (tireChange: TireChange) => {
   return {
     tireId: tireChange.tireId,
+    changeType: tireChange.changeType,
     installedMileage: tireChange.installedMileage,
     removedMileage: tireChange.removedMileage,
     removedDate: tireChange.removedDate,
