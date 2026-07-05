@@ -10,6 +10,7 @@ import { RemindersModule } from '@modules/reminders';
 import { SessionsModule } from '@modules/sessions';
 import { StatsModule } from '@modules/stats';
 import { TimelineModule } from '@modules/timeline';
+import { TiresModule } from '@modules/tires';
 import { TokensModule } from '@modules/tokens';
 import { UsersModule } from '@modules/users';
 import { VehiclesModule } from '@modules/vehicles';
@@ -40,6 +41,7 @@ import { PrismaModule } from './prisma';
     ScheduleModule.forRoot(),
     StatsModule,
     MediaModule,
+    TiresModule,
     AiModule,
   ],
 })

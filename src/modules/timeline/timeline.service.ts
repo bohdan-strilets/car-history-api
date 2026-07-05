@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
+import { TiresService } from '@modules/tires';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, TimelineType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
@@ -17,6 +18,7 @@ export class TimelineService {
     private readonly timelineRepository: TimelineRepository,
     private readonly milestonesService: MilestonesService,
     private readonly remindersService: RemindersService,
+    private readonly tiresService: TiresService,
   ) {}
 
   // ─── Queries ───────────────────────────────────────────────────────────────
@@ -88,6 +90,16 @@ export class TimelineService {
           vehicleId,
           eventType: dto.type,
         });
+      }
+    }
+
+    if (dto.type === TimelineType.TIRE_CHANGE) {
+      const isRemoval = dto.removedMileage != null || dto.removedDate != null;
+
+      if (isRemoval) {
+        await this.tiresService.unmount(dto.tireId!);
+      } else if (dto.installedMileage != null) {
+        await this.tiresService.mount(dto.tireId!, vehicleId);
       }
     }
 
