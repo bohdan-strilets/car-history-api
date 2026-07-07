@@ -31,6 +31,14 @@ export class AppConfigService {
     return this.config.get('SITE_NAME', { infer: true });
   }
 
+  get throttleTtlMs() {
+    return this.config.get('THROTTLE_TTL_MS', { infer: true });
+  }
+
+  get throttleLimit() {
+    return this.config.get('THROTTLE_LIMIT', { infer: true });
+  }
+
   get databasePoolMax() {
     return this.config.get('DATABASE_POOL_MAX', { infer: true });
   }

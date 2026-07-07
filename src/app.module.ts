@@ -1,5 +1,7 @@
 import { CryptoModule } from '@common/crypto';
+import { CommonThrottlerModule } from '@common/throttler';
 import { AiModule } from '@modules/ai';
+import { AiConversationsModule } from '@modules/ai-conversations';
 import { AuthModule } from '@modules/auth';
 import { MailModule } from '@modules/mail';
 import { MaintenanceModule } from '@modules/maintenance';
@@ -26,6 +28,7 @@ import { PrismaModule } from './prisma';
   imports: [
     AppConfigModule,
     PrismaModule,
+    CommonThrottlerModule,
     CryptoModule,
     TokensModule,
     UsersModule,
@@ -45,6 +48,7 @@ import { PrismaModule } from './prisma';
     TiresModule,
     ServiceStationsModule,
     AiModule,
+    AiConversationsModule,
   ],
 })
 export class AppModule {}
