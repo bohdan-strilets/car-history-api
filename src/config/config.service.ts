@@ -119,6 +119,10 @@ export class AppConfigService {
     return this.config.get('GOOGLE_CALLBACK_URL', { infer: true });
   }
 
+  get googlePlacesApiKey() {
+    return this.config.get('GOOGLE_PLACES_API_KEY', { infer: true });
+  }
+
   get resendApiKey() {
     return this.config.get('RESEND_API_KEY', { infer: true });
   }

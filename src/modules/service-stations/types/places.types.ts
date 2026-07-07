@@ -12,7 +12,7 @@ export interface PlaceDetailsResult {
     city: string;
     street: string;
     number: string;
-    postCode: string;
+    postCode?: string;
   };
   formattedAddress: string;
   latitude: number;

@@ -32,6 +32,7 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_CALLBACK_URL: z.string(),
+  GOOGLE_PLACES_API_KEY: z.string(),
 
   RESEND_API_KEY: z.string(),
   MAIL_FROM: z.string().default('noreply@arvino.app'),
