@@ -3,8 +3,8 @@ import { VehicleSpecsPromptParams } from '@modules/vehicles';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 
-import type { AiCompletionParams, AiCompletionResult } from './ai.types';
 import { buildVehicleSpecsPrompt } from './prompts';
+import type { AiCompletionParams, AiCompletionResult } from './types/ai.types';
 
 @Injectable()
 export class AiService {
@@ -38,6 +38,38 @@ export class AiService {
       };
     } catch (error) {
       this.logger.error('OpenRouter API error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw new InternalServerErrorException('AI service unavailable');
+    }
+  }
+
+  async *streamComplete(params: AiCompletionParams): AsyncGenerator<string, number> {
+    let tokensUsed = 0;
+
+    try {
+      const stream = await this.client.chat.completions.create({
+        model: params.model ?? this.config.openRouterDefaultModel,
+        messages: params.messages,
+        max_tokens: params.maxTokens ?? this.config.openRouterMaxTokens,
+        temperature: params.temperature ?? 0.7,
+        stream: true,
+        stream_options: { include_usage: true },
+      });
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content;
+        if (delta) yield delta;
+
+        if (chunk.usage?.total_tokens) {
+          tokensUsed = chunk.usage.total_tokens;
+        }
+      }
+
+      return tokensUsed;
+    } catch (error) {
+      this.logger.error('OpenRouter streaming error', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
