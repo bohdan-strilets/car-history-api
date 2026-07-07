@@ -814,6 +814,8 @@ model ServiceStation {
   lastVisitedAt DateTime?
   visitCount    Int                @default(0)
   myRating      Int?
+  googlePlaceId String?
+  googleRating  Decimal?
   photoUrl      String?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
@@ -821,6 +823,7 @@ model ServiceStation {
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   timelineEvents TimelineEvent[]
 
+  @@unique([userId, googlePlaceId])
   @@map("service_stations")
 }
 

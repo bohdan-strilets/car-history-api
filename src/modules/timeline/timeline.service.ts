@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ErrorCodes } from '@common/exceptions';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
+import { ServiceStationsService } from '@modules/service-stations';
 import { TiresService } from '@modules/tires';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, TimelineType, TireChangeType } from '@prisma/client';
@@ -19,6 +20,7 @@ export class TimelineService {
     private readonly milestonesService: MilestonesService,
     private readonly remindersService: RemindersService,
     private readonly tiresService: TiresService,
+    private readonly serviceStationsService: ServiceStationsService,
   ) {}
 
   // ─── Queries ───────────────────────────────────────────────────────────────
@@ -101,6 +103,10 @@ export class TimelineService {
       }
     }
 
+    if (dto.serviceStationId) {
+      await this.serviceStationsService.recalculateVisitStats(dto.serviceStationId);
+    }
+
     return event;
   }
 
@@ -134,6 +140,14 @@ export class TimelineService {
       }
     }
 
+    const stationsToRecalculate = new Set<string>();
+    if (event.serviceStation?.id) stationsToRecalculate.add(event.serviceStation.id);
+    if (dto.serviceStationId) stationsToRecalculate.add(dto.serviceStationId);
+
+    for (const stationId of stationsToRecalculate) {
+      await this.serviceStationsService.recalculateVisitStats(stationId);
+    }
+
     return updated;
   }
 
@@ -155,6 +169,10 @@ export class TimelineService {
 
     if (event.type === TimelineType.PURCHASE || event.type === TimelineType.SALE) {
       await this.timelineRepository.syncVehicleInfoFromEvent(event.vehicleId, event.type, null);
+    }
+
+    if (event.serviceStation?.id) {
+      await this.serviceStationsService.recalculateVisitStats(event.serviceStation.id);
     }
   }
 

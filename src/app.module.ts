@@ -7,6 +7,7 @@ import { MediaModule } from '@modules/media';
 import { MilestonesModule } from '@modules/milestones';
 import { NotificationsModule } from '@modules/notifications';
 import { RemindersModule } from '@modules/reminders';
+import { ServiceStationsModule } from '@modules/service-stations';
 import { SessionsModule } from '@modules/sessions';
 import { StatsModule } from '@modules/stats';
 import { TimelineModule } from '@modules/timeline';
@@ -42,6 +43,7 @@ import { PrismaModule } from './prisma';
     StatsModule,
     MediaModule,
     TiresModule,
+    ServiceStationsModule,
     AiModule,
   ],
 })

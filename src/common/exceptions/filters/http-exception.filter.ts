@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
 
 import { AppException } from '../app.exception';
@@ -44,6 +45,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
         statusCode: exception.getStatus(),
         errorCode: exception.errorCode,
         details: exception.details,
+      };
+    }
+
+    if (exception instanceof Prisma.PrismaClientKnownRequestError && exception.code === 'P2002') {
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        errorCode: ErrorCodes.General.CONFLICT,
+        details: { fields: exception.meta?.target ?? [] },
       };
     }
 
