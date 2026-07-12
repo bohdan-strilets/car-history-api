@@ -1,3 +1,4 @@
+import { SkipTransform } from '@common/decorators';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
 import { JwtAccessPayload } from '@modules/tokens';
@@ -61,6 +62,7 @@ export class AiConversationsController {
 
   @Post(':conversationId/messages')
   @Sse()
+  @SkipTransform()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async sendMessage(
     @Param('conversationId') conversationId: string,
@@ -82,7 +84,7 @@ export class AiConversationsController {
             accumulatedContent += chunk;
 
             subscriber.next({
-              event: 'chunk',
+              type: 'chunk',
               data: { chunk },
             } as MessageEvent);
           }
@@ -97,7 +99,7 @@ export class AiConversationsController {
           );
 
           subscriber.next({
-            event: 'complete',
+            type: 'complete',
             data: {
               messageId: `${message.id}:assistant`,
               content: accumulatedContent,
@@ -117,7 +119,7 @@ export class AiConversationsController {
           );
 
           subscriber.next({
-            event: 'error',
+            type: 'error',
             data: { error: errorMessage },
           } as MessageEvent);
 
