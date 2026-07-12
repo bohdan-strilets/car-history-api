@@ -1,5 +1,6 @@
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
+import { JwtAccessPayload } from '@modules/tokens';
 import {
   Body,
   Controller,
@@ -12,7 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { User } from '@prisma/client';
 import { Observable } from 'rxjs';
 
 import { AiConversationsService } from './ai-conversations.service';
@@ -27,7 +27,7 @@ export class AiConversationsController {
 
   @Get()
   async getConversations(
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtAccessPayload,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -35,7 +35,7 @@ export class AiConversationsController {
     const parsedLimit = limit ? parseInt(limit, 10) : undefined;
 
     return this.aiConversationsService.getConversations(
-      user.id,
+      user.sub,
       Number.isInteger(parsedPage) ? parsedPage : undefined,
       Number.isInteger(parsedLimit) ? parsedLimit : undefined,
     );
@@ -44,16 +44,19 @@ export class AiConversationsController {
   @Get(':conversationId')
   async getConversation(
     @Param('conversationId') conversationId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtAccessPayload,
   ) {
-    return this.aiConversationsService.getConversation(conversationId, user.id);
+    return this.aiConversationsService.getConversation(conversationId, user.sub);
   }
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
   @Post()
-  async createConversation(@CurrentUser() user: User, @Body() dto: CreateConversationDto) {
-    return this.aiConversationsService.createConversation(user.id, dto.vehicleId, dto.title);
+  async createConversation(
+    @CurrentUser() user: JwtAccessPayload,
+    @Body() dto: CreateConversationDto,
+  ) {
+    return this.aiConversationsService.createConversation(user.sub, dto.vehicleId, dto.title);
   }
 
   @Post(':conversationId/messages')
@@ -62,11 +65,11 @@ export class AiConversationsController {
   async sendMessage(
     @Param('conversationId') conversationId: string,
     @Body() dto: SendMessageDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtAccessPayload,
   ): Promise<Observable<MessageEvent>> {
     const { message, stream } = await this.aiConversationsService.addMessage(
       conversationId,
-      user.id,
+      user.sub,
       dto.content,
     );
 
@@ -75,7 +78,6 @@ export class AiConversationsController {
 
       (async () => {
         try {
-          // Stream chunks from AI service
           for await (const chunk of stream) {
             accumulatedContent += chunk;
 
@@ -85,10 +87,8 @@ export class AiConversationsController {
             } as MessageEvent);
           }
 
-          // Get final token count from generator return value
           const tokensUsed = Number((await stream.next()).value ?? 0);
 
-          // Save complete assistant message to DB
           await this.aiConversationsService.saveAssistantMessage(
             conversationId,
             accumulatedContent,
@@ -96,7 +96,6 @@ export class AiConversationsController {
             false,
           );
 
-          // Send completion event
           subscriber.next({
             event: 'complete',
             data: {
@@ -110,7 +109,6 @@ export class AiConversationsController {
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-          // Save error message to DB
           await this.aiConversationsService.saveAssistantMessage(
             conversationId,
             accumulatedContent || `Error: ${errorMessage}`,
@@ -118,7 +116,6 @@ export class AiConversationsController {
             true,
           );
 
-          // Send error event
           subscriber.next({
             event: 'error',
             data: { error: errorMessage },
