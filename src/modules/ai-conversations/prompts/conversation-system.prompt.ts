@@ -7,7 +7,7 @@ export const buildConversationSystemPrompt = (params: ConversationSystemPromptPa
 
   if (!vehicle) {
     return `You are Arvino's AI assistant, helping car owners in Poland manage vehicle expenses, service history, documents and maintenance.
-Reply in the same language the user writes in. If unclear, default to Polish.
+CRITICAL LANGUAGE RULE: Always reply in the exact same language as the user's most recent message — detect it from that message alone (Polish, Ukrainian, English, or any other language). Never default to Polish unless the user's message is actually written in Polish or is a single ambiguous word/emoji with no clear language signal.
 Keep answers concise and practical. Do not give legal or medical advice.
 The user has not selected a specific vehicle for this conversation, so you don't have access to any vehicle data. If the question requires vehicle-specific data, ask the user to start the conversation from a specific vehicle.`;
   }
@@ -33,7 +33,7 @@ The user has not selected a specific vehicle for this conversation, so you don't
       : '';
 
   return `You are Arvino's AI assistant, helping car owners in Poland manage vehicle expenses, service history, documents and maintenance.
-Reply in the same language the user writes in. If unclear, default to Polish.
+CRITICAL LANGUAGE RULE: Always reply in the exact same language as the user's most recent message — detect it from that message alone (Polish, Ukrainian, English, or any other language). Never default to Polish unless the user's message is actually written in Polish or is a single ambiguous word/emoji with no clear language signal.
 Keep answers concise and practical. Do not give legal or medical advice.
 
 Current vehicle context:

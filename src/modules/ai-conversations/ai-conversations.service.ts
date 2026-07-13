@@ -108,13 +108,19 @@ export class AiConversationsService {
     const messages = history?.messages ?? [];
 
     // Prepare messages for API: system + history + new user message
+    // Language instruction is embedded directly into the user turn content (not as a
+    // separate system message) because weaker models attend far more reliably to
+    // instructions inside the immediate user message than to system messages placed
+    // mid-conversation, which tend to get ignored after a few turns.
+    const languageTaggedContent = `[Respond in the same language as this message] ${userContent}`;
+
     const apiMessages = [
       { role: 'system' as const, content: systemPrompt },
       ...messages.map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user' as const, content: userContent },
+      { role: 'user' as const, content: languageTaggedContent },
     ];
 
     // Return user message + stream generator
