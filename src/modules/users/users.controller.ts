@@ -1,7 +1,13 @@
-import { Auth, CurrentUserId, EmailVerified } from '@common/decorators';
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Auth, CurrentUserId, EmailVerified, Public } from '@common/decorators';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 
-import { UpdateUserDto, UpdateUserSettingsDto } from './dto';
+import {
+  ChangeEmailDto,
+  ConfirmEmailChangeDto,
+  DeleteAccountDto,
+  UpdateUserDto,
+  UpdateUserSettingsDto,
+} from './dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -30,5 +36,27 @@ export class UsersController {
   @EmailVerified()
   async updateSettings(@CurrentUserId() userId: string, @Body() dto: UpdateUserSettingsDto) {
     return this.usersService.updateSettings(userId, dto);
+  }
+
+  @Post('me/change-email')
+  @EmailVerified()
+  async changeEmail(@CurrentUserId() userId: string, @Body() dto: ChangeEmailDto) {
+    await this.usersService.changeEmail(userId, dto);
+  }
+
+  @Post('me/confirm-email-change')
+  @Public()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async confirmEmailChange(@Body() dto: ConfirmEmailChangeDto) {
+    await this.usersService.confirmEmailChange(dto);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(
+    @CurrentUserId() userId: string,
+    @Body() dto: DeleteAccountDto,
+  ): Promise<void> {
+    await this.usersService.deleteAccount(userId, dto.password);
   }
 }

@@ -9,12 +9,17 @@ import {
 } from '@common/exceptions';
 import { createExpiresAt, formatEmail } from '@common/utils';
 import { AppConfigService } from '@config/config.service';
-import { Injectable } from '@nestjs/common';
+import { MailService } from '@modules/mail';
+import { SessionsService } from '@modules/sessions';
+import { WorkspacesService } from '@modules/workspaces';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { User, UserSettings, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { AuthCredentialsRepo } from './auth-credentials.repository';
 import {
+  ChangeEmailDto,
+  ConfirmEmailChangeDto,
   CreateGoogleUserDto,
   CreateUserDto,
   UpdateUserDto,
@@ -22,6 +27,7 @@ import {
   UserProfileResponseDto,
   UserResponseDto,
 } from './dto';
+import { EmailChangeTokenRepo } from './email-change-token.repository';
 import { EmailVerifyTokenRepo } from './email-verify-token.repository';
 import { toUserProfileResponse, toUserResponse } from './mappers';
 import { PasswordResetTokenRepo } from './password-reset-token.repository';
@@ -36,6 +42,11 @@ export class UsersService {
     private readonly passwordResetTokenRepo: PasswordResetTokenRepo,
     private readonly authCredentialsRepo: AuthCredentialsRepo,
     private readonly userSettingsRepo: UserSettingsRepo,
+    private readonly mailService: MailService,
+    private readonly emailChangeTokenRepo: EmailChangeTokenRepo,
+    private readonly sessionsService: SessionsService,
+    @Inject(forwardRef(() => WorkspacesService))
+    private readonly workspacesService: WorkspacesService,
     private readonly crypto: CryptoService,
     private readonly config: AppConfigService,
     private readonly prisma: PrismaService,
@@ -250,6 +261,90 @@ export class UsersService {
 
   async updateSettings(userId: string, dto: UpdateUserSettingsDto): Promise<UserSettings> {
     return this.userSettingsRepo.update(userId, dto);
+  }
+
+  // ─── Email Change ─────────────────────────────────────────────────────────
+
+  async changeEmail(userId: string, dto: ChangeEmailDto): Promise<void> {
+    const user = await this.getById(userId);
+    const formattedEmail = formatEmail(dto.newEmail);
+
+    if (formattedEmail === user.email) {
+      throw new BadRequestException(ErrorCodes.General.BAD_REQUEST);
+    }
+
+    const existing = await this.usersRepo.findByEmail(formattedEmail);
+    if (existing) throw new ConflictException(ErrorCodes.Email.ALREADY_EXISTS);
+
+    const { raw, hash } = this.crypto.generateToken();
+    const expiresAt = createExpiresAt(this.config.emailVerifyExpiresInMinutes);
+
+    await this.emailChangeTokenRepo.create({
+      userId,
+      newEmail: formattedEmail,
+      tokenHash: hash,
+      expiresAt,
+    });
+
+    const confirmUrl = `${this.config.frontendUrl}/profile/confirm-email-change?token=${raw}`;
+
+    await this.mailService.sendConfirmEmailChange({
+      to: formattedEmail,
+      firstName: user.firstName,
+      newEmail: formattedEmail,
+      confirmUrl,
+    });
+  }
+
+  async confirmEmailChange(dto: ConfirmEmailChangeDto): Promise<void> {
+    const tokenHash = this.crypto.hashToken(dto.token);
+    const token = await this.emailChangeTokenRepo.findByTokenHash(tokenHash);
+
+    if (!token) throw new BadRequestException(ErrorCodes.Token.INVALID);
+    if (token.usedAt) throw new BadRequestException(ErrorCodes.Token.ALREADY_USED);
+    if (token.expiresAt < new Date()) throw new BadRequestException(ErrorCodes.Token.EXPIRED);
+
+    const existing = await this.usersRepo.findByEmail(token.newEmail);
+    if (existing) throw new ConflictException(ErrorCodes.Email.ALREADY_EXISTS);
+
+    const user = await this.getById(token.userId);
+    const oldEmail = user.email;
+
+    await this.usersRepo.updateEmail(token.userId, token.newEmail);
+    await this.emailChangeTokenRepo.markUsed(token.id);
+
+    await this.mailService.sendEmailChanged({
+      to: oldEmail,
+      firstName: user.firstName,
+      newEmail: token.newEmail,
+      resetUrl: `${this.config.frontendUrl}/auth/forgot-password`,
+      changedAt: new Date(),
+    });
+  }
+
+  // ─── Delete ───────────────────────────────────────────────────────────────
+
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    await this.verifyPassword(userId, password);
+
+    const hasBlockingOwnership = await this.workspacesService.hasBlockingOwnership(userId);
+    if (hasBlockingOwnership) {
+      throw new ConflictException(ErrorCodes.Workspace.OWNER_CANNOT_DELETE_ACCOUNT);
+    }
+
+    await this.usersRepo.softDelete(userId);
+    await this.sessionsService.revokeAllSessions(userId);
+  }
+
+  private async verifyPassword(userId: string, password: string): Promise<void> {
+    const credentials = await this.authCredentialsRepo.findByUserId(userId);
+    if (!credentials?.passwordHash) {
+      throw new UnauthorizedException(ErrorCodes.Auth.INVALID_CREDENTIALS);
+    }
+    const isValid = await this.crypto.comparePassword(password, credentials.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException(ErrorCodes.Auth.INVALID_CREDENTIALS);
+    }
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -58,3 +58,8 @@ export interface ReminderNotificationParams extends BaseTemplateParams {
   daysLeft: number;
   vehicleName: string;
 }
+
+export interface ConfirmEmailChangeParams extends BaseTemplateParams {
+  newEmail: string;
+  confirmUrl: string;
+}

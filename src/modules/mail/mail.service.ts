@@ -5,6 +5,7 @@ import { Resend } from 'resend';
 
 import {
   AccountLockedParams,
+  ConfirmEmailChangeParams,
   ConfirmEmailParams,
   EmailChangedParams,
   MailParams,
@@ -17,6 +18,7 @@ import {
 } from './mail.types';
 import {
   AccountLockedTemplate,
+  ConfirmEmailChangeTemplate,
   ConfirmEmailTemplate,
   EmailChangedTemplate,
   NewDeviceLoginTemplate,
@@ -162,6 +164,19 @@ export class MailService {
       }),
     );
     const subject = `Przypomnienie: ${reminderTitle} — Arvino`;
+    await this.send({ to, subject, html });
+  }
+
+  // ─── User ───────────────────────────────────────────────────────────
+
+  async sendConfirmEmailChange({
+    to,
+    firstName,
+    newEmail,
+    confirmUrl,
+  }: ConfirmEmailChangeParams): Promise<void> {
+    const html = await render(ConfirmEmailChangeTemplate({ firstName, newEmail, confirmUrl }));
+    const subject = 'Potwierdź nowy adres email — Arvino';
     await this.send({ to, subject, html });
   }
 }

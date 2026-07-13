@@ -1,4 +1,5 @@
 export { AccountLockedTemplate } from './account-locked.template';
+export { ConfirmEmailChangeTemplate } from './confirm-email-change.template';
 export { ConfirmEmailTemplate } from './confirm-email.template';
 export { EmailChangedTemplate } from './email-changed.template';
 export { NewDeviceLoginTemplate } from './new-device-login.template';

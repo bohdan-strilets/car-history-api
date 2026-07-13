@@ -12,6 +12,7 @@ export { CurrentWorkspaceMember } from './current-workspace-member.decorator';
 export { EmailVerified } from './email-verified.decorator';
 export { GoogleAuth } from './google-auth.decorator';
 export { GoogleUser } from './google-user.decorator';
+export { IS_PUBLIC_KEY, Public } from './public.decorator';
 export { SKIP_TRANSFORM_KEY, SkipTransform } from './skip-transform.decorator';
 export { VehicleAccess } from './vehicle-access.decorator';
 export { WorkspaceMember } from './workspace-member.decorator';
