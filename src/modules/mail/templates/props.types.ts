@@ -88,3 +88,9 @@ export interface ReminderNotificationProps {
   daysLeft: number;
   vehicleName: string;
 }
+
+export interface ConfirmEmailChangeProps {
+  firstName: string;
+  newEmail: string;
+  confirmUrl: string;
+}

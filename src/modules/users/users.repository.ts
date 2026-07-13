@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, UserStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
@@ -53,6 +53,13 @@ export class UsersRepo {
     });
   }
 
+  async updateEmail(userId: string, email: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { email },
+    });
+  }
+
   async update(userId: string, data: UpdateUserInput): Promise<User> {
     return this.prisma.user.update({
       where: { id: userId },
@@ -64,6 +71,16 @@ export class UsersRepo {
     await this.prisma.user.update({
       where: { id: userId },
       data: { onboardingCompleted: true },
+    });
+  }
+
+  async softDelete(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: UserStatus.DELETED,
+        deletedAt: new Date(),
+      },
     });
   }
 }

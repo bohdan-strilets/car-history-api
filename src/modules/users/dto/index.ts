@@ -1,6 +1,9 @@
 export { BaseUserDto } from './base-user.dto';
+export { ChangeEmailDto } from './change-email.dto';
+export { ConfirmEmailChangeDto } from './confirm-email-change.dto';
 export { CreateGoogleUserDto } from './create-google-user.dto';
 export { CreateUserDto } from './create-user.dto';
+export { DeleteAccountDto } from './delete-account.dto';
 export { UpdateUserSettingsDto } from './update-user-settings.dto';
 export { UpdateUserDto } from './update-user.dto';
 export { UserProfileResponseDto } from './user-profile-response.dto';

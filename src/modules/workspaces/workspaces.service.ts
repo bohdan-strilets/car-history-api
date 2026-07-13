@@ -10,7 +10,7 @@ import {
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
 import { UsersService } from '@modules/users/users.service';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InviteStatus, Role, Workspace, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
@@ -47,6 +47,7 @@ export class WorkspacesService {
     private readonly workspaceMembersRepo: WorkspaceMembersRepo,
     private readonly workspaceSettingsRepo: WorkspaceSettingsRepo,
     private readonly workspaceInvitesRepo: WorkspaceInvitesRepo,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly config: AppConfigService,
@@ -319,6 +320,15 @@ export class WorkspacesService {
     );
     if (!invite) throw new NotFoundException(ErrorCodes.Workspace.INVITE_NOT_FOUND);
     await this.workspaceInvitesRepo.deleteById(inviteId);
+  }
+
+  // ─── Utils ──────────────────────────────────────────────────────────────
+
+  async hasBlockingOwnership(userId: string): Promise<boolean> {
+    const workspaces = await this.workspacesRepo.findAllByUserId(userId);
+    return workspaces.some(
+      (workspace) => workspace.members[0]?.role === Role.OWNER && workspace._count.members > 1,
+    );
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────
