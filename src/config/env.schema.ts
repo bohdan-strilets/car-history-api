@@ -66,6 +66,8 @@ export const envSchema = z.object({
     .default('image/jpeg,image/png,image/webp,image/heic,image/heif'),
   MEDIA_ALLOWED_VIDEO_MIME_TYPES: z.string().default('video/mp4,video/quicktime,video/webm'),
   MEDIA_MAX_VIDEO_DURATION_SECONDS: z.coerce.number().int().min(1).default(120),
+
+  SENTRY_DSN: z.string().optional().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -20,12 +20,14 @@ import { VehiclesModule } from '@modules/vehicles';
 import { WorkspacesModule } from '@modules/workspaces';
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SentryModule } from '@sentry/nestjs/setup';
 
 import { AppConfigModule } from './config';
 import { PrismaModule } from './prisma';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     AppConfigModule,
     PrismaModule,
     CommonThrottlerModule,

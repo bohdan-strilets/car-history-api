@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as Sentry from '@sentry/nestjs';
 import { Request, Response } from 'express';
 
 import { AppException } from '../app.exception';
@@ -28,6 +29,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const isError = exception instanceof Error;
       const logStack = isError ? exception.stack : String(exception);
       this.logger.error(logMessage, logStack);
+      Sentry.captureException(exception);
     }
 
     response.status(statusCode).json({ statusCode, errorCode, details });

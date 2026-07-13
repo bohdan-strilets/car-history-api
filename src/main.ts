@@ -1,3 +1,5 @@
+import './instrument';
+
 import { HttpExceptionFilter } from '@common/exceptions';
 import { TransformInterceptor } from '@common/interceptors';
 import { createValidationPipe } from '@common/pipes';

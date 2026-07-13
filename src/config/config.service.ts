@@ -226,4 +226,8 @@ export class AppConfigService {
   get mediaMaxVideoDurationSeconds() {
     return this.config.get('MEDIA_MAX_VIDEO_DURATION_SECONDS', { infer: true });
   }
+
+  get sentryDsn() {
+    return this.config.get('SENTRY_DSN', { infer: true });
+  }
 }
