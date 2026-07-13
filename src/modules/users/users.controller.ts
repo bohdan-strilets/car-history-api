@@ -5,6 +5,7 @@ import {
   ChangeEmailDto,
   ConfirmEmailChangeDto,
   DeleteAccountDto,
+  UpdatePasswordDto,
   UpdateUserDto,
   UpdateUserSettingsDto,
 } from './dto';
@@ -58,5 +59,11 @@ export class UsersController {
     @Body() dto: DeleteAccountDto,
   ): Promise<void> {
     await this.usersService.deleteAccount(userId, dto.password);
+  }
+
+  @Patch('me/password')
+  @EmailVerified()
+  async changePassword(@CurrentUserId() userId: string, @Body() dto: UpdatePasswordDto) {
+    await this.usersService.changePassword(userId, dto);
   }
 }

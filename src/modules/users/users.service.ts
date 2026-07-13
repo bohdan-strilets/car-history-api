@@ -22,6 +22,7 @@ import {
   ConfirmEmailChangeDto,
   CreateGoogleUserDto,
   CreateUserDto,
+  UpdatePasswordDto,
   UpdateUserDto,
   UpdateUserSettingsDto,
   UserProfileResponseDto,
@@ -345,6 +346,25 @@ export class UsersService {
     if (!isValid) {
       throw new UnauthorizedException(ErrorCodes.Auth.INVALID_CREDENTIALS);
     }
+  }
+
+  // ─── Change Password ──────────────────────────────────────────────────────
+
+  async changePassword(userId: string, dto: UpdatePasswordDto): Promise<void> {
+    await this.verifyPassword(userId, dto.currentPassword);
+
+    const credentials = await this.authCredentialsRepo.findByUserId(userId);
+    const isSame = await this.crypto.comparePassword(dto.newPassword, credentials!.passwordHash!);
+    if (isSame) {
+      throw new BadRequestException(ErrorCodes.User.PASSWORD_SAME);
+    }
+
+    const passwordHash = await this.crypto.hashPassword(dto.newPassword);
+
+    await this.authCredentialsRepo.updatePassword(userId, {
+      passwordHash,
+      passwordChangedAt: new Date(),
+    });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
