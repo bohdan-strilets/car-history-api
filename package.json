@@ -18,7 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky",
+    "prepare": "node -e \"try{require('husky')}catch(e){process.exit(0)}\" && husky || true",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
