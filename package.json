@@ -22,7 +22,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "node -r dotenv/config -r ts-node/register prisma/seed.ts"
   },
   "lint-staged": {
     "*.ts": [
