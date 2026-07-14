@@ -16,7 +16,7 @@ export const setCsrfTokenCookie = (
   res.cookie(CSRF_TOKEN_COOKIE, token, {
     httpOnly: false,
     secure: config.isProduction,
-    sameSite: 'strict',
+    sameSite: config.isProduction ? 'none' : 'strict',
     maxAge: ms(config.jwtRefreshExpiresIn),
     path: '/',
   });
@@ -26,7 +26,7 @@ export const clearCsrfTokenCookie = (res: Response, config: AppConfigService): v
   res.clearCookie(CSRF_TOKEN_COOKIE, {
     httpOnly: false,
     secure: config.isProduction,
-    sameSite: 'strict',
+    sameSite: config.isProduction ? 'none' : 'strict',
     path: '/',
   });
 };
