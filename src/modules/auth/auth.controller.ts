@@ -2,8 +2,8 @@ import { AuditLogService } from '@common/audit';
 import { SECURITY } from '@common/constants';
 import {
   clearCsrfTokenCookie,
-  createCsrfToken,
   clearRefreshTokenCookie,
+  createCsrfToken,
   getRefreshTokenFromCookie,
   setCsrfTokenCookie,
   setRefreshTokenCookie,
@@ -53,13 +53,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const result = await this.authService.register(dto, req);
-    this.setAuthCookies(res, result.refreshToken);
-    this.auditLog.log({
-      action: 'auth.register',
-      userId: result.user.id,
-      req,
-    });
-    return { accessToken: result.accessToken, user: result.user };
+    const csrfToken = this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({ action: 'auth.register', userId: result.user.id, req });
+    return { accessToken: result.accessToken, user: result.user, csrfToken };
   }
 
   @Post('login')
@@ -72,13 +68,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const result = await this.authService.login(dto, req);
-    this.setAuthCookies(res, result.refreshToken);
-    this.auditLog.log({
-      action: 'auth.login',
-      userId: result.user.id,
-      req,
-    });
-    return { accessToken: result.accessToken, user: result.user };
+    const csrfToken = this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({ action: 'auth.login', userId: result.user.id, req });
+    return { accessToken: result.accessToken, user: result.user, csrfToken };
   }
 
   @Post('refresh')
@@ -96,13 +88,9 @@ export class AuthController {
     }
 
     const result = await this.authService.refresh(refreshToken);
-    this.setAuthCookies(res, result.refreshToken);
-    this.auditLog.log({
-      action: 'auth.refresh',
-      userId: result.user.id,
-      req,
-    });
-    return { accessToken: result.accessToken, user: result.user };
+    const csrfToken = this.setAuthCookies(res, result.refreshToken);
+    this.auditLog.log({ action: 'auth.refresh', userId: result.user.id, req });
+    return { accessToken: result.accessToken, user: result.user, csrfToken };
   }
 
   @Post('logout')
@@ -175,9 +163,10 @@ export class AuthController {
     @Req() req: Request,
   ): Promise<void> {
     const result = await this.authService.googleAuth(googleUser, req);
-    this.setAuthCookies(res, result.refreshToken);
+    const csrfToken = this.setAuthCookies(res, result.refreshToken);
 
-    const redirectUrl = `${this.config.frontendUrl}/auth/google/callback?accessToken=${result.accessToken}`;
+    const redirectUrl = `${this.config.frontendUrl}/auth/google/callback?accessToken=${result.accessToken}&csrfToken=${csrfToken}`;
+
     res.redirect(redirectUrl);
   }
 
@@ -187,8 +176,10 @@ export class AuthController {
     return this.authService.me(userId);
   }
 
-  private setAuthCookies(res: Response, refreshToken: string): void {
+  private setAuthCookies(res: Response, refreshToken: string): string {
+    const csrfToken = createCsrfToken();
     setRefreshTokenCookie(res, refreshToken, this.config);
-    setCsrfTokenCookie(res, createCsrfToken(), this.config);
+    setCsrfTokenCookie(res, csrfToken, this.config);
+    return csrfToken;
   }
 }
