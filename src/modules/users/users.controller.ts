@@ -1,5 +1,16 @@
-import { Auth, CurrentUserId, EmailVerified, Public } from '@common/decorators';
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import { Auth, CurrentSessionId, CurrentUserId, EmailVerified, Public } from '@common/decorators';
+import { SessionsService } from '@modules/sessions';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import {
   ChangeEmailDto,
@@ -14,7 +25,10 @@ import { UsersService } from './users.service';
 @Controller('users')
 @Auth()
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly sessionsService: SessionsService,
+  ) {}
 
   @Get('me')
   async getMe(@CurrentUserId() userId: string) {
@@ -65,5 +79,28 @@ export class UsersController {
   @EmailVerified()
   async changePassword(@CurrentUserId() userId: string, @Body() dto: UpdatePasswordDto) {
     await this.usersService.changePassword(userId, dto);
+  }
+
+  @Get('me/sessions')
+  async getSessions(@CurrentUserId() userId: string, @CurrentSessionId() currentSessionId: string) {
+    return this.sessionsService.getUserSessions(userId, currentSessionId);
+  }
+
+  @Delete('me/sessions/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeSession(
+    @CurrentUserId() userId: string,
+    @Param('id') sessionId: string,
+  ): Promise<void> {
+    await this.sessionsService.revokeSession(sessionId, userId);
+  }
+
+  @Delete('me/sessions')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async revokeAllSessionsExceptCurrent(
+    @CurrentUserId() userId: string,
+    @CurrentSessionId() currentSessionId: string,
+  ): Promise<void> {
+    await this.sessionsService.revokeAllSessionsExceptCurrent(userId, currentSessionId);
   }
 }

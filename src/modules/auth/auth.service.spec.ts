@@ -292,12 +292,13 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('should revoke session successfully', async () => {
       const sessionId = 'session-123';
+      const userId = 'user-123';
 
       sessionsService.revokeSession.mockResolvedValue(undefined);
 
-      await service.logout(sessionId);
+      await service.logout(sessionId, userId);
 
-      expect(sessionsService.revokeSession).toHaveBeenCalledWith(sessionId);
+      expect(sessionsService.revokeSession).toHaveBeenCalledWith(sessionId, userId);
     });
   });
 

@@ -18,6 +18,19 @@ export class SessionsRepository {
     });
   }
 
+  async findActiveByIdAndUserId(id: string, userId: string): Promise<Session | null> {
+    return this.prisma.session.findFirst({
+      where: { id, userId, status: SessionStatus.ACTIVE },
+    });
+  }
+
+  async findAllActiveByUserId(userId: string): Promise<Session[]> {
+    return this.prisma.session.findMany({
+      where: { userId, status: SessionStatus.ACTIVE },
+      orderBy: { lastActivityAt: 'desc' },
+    });
+  }
+
   async findByTokenFamily(tokenFamily: string): Promise<Session | null> {
     return this.prisma.session.findFirst({
       where: { tokenFamily },
@@ -44,6 +57,16 @@ export class SessionsRepository {
   async revokeAllByUserId(userId: string): Promise<void> {
     await this.prisma.session.updateMany({
       where: { userId, status: SessionStatus.ACTIVE },
+      data: {
+        status: SessionStatus.REVOKED,
+        revokedAt: new Date(),
+      },
+    });
+  }
+
+  async revokeAllByUserIdExcept(userId: string, exceptSessionId: string): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: { userId, status: SessionStatus.ACTIVE, id: { not: exceptSessionId } },
       data: {
         status: SessionStatus.REVOKED,
         revokedAt: new Date(),

@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto';
 
 import { CryptoService } from '@common/crypto';
-import { ErrorCodes, UnauthorizedException } from '@common/exceptions';
+import { ErrorCodes, NotFoundException, UnauthorizedException } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
 import { TokensService } from '@modules/tokens/tokens.service';
 import { Injectable } from '@nestjs/common';
 import ms from 'ms';
 
+import { SessionResponseDto } from './dto';
+import { toSessionListResponse } from './mappers';
 import { CreateSessionOptions, RefreshSessionResult } from './session.type';
 import { SessionsRepository } from './sessions.repository';
 
@@ -104,14 +106,31 @@ export class SessionsService {
     return { accessToken, refreshToken: newRawRefreshToken, session };
   }
 
+  // ─── Read ─────────────────────────────────────────────────────────────────
+
+  async getUserSessions(userId: string, currentSessionId: string): Promise<SessionResponseDto[]> {
+    const sessions = await this.sessionsRepo.findAllActiveByUserId(userId);
+    return toSessionListResponse(sessions, currentSessionId);
+  }
+
   // ─── Revoke ───────────────────────────────────────────────────────────────
 
-  async revokeSession(sessionId: string): Promise<void> {
+  async revokeSession(sessionId: string, userId: string): Promise<void> {
+    const session = await this.sessionsRepo.findActiveByIdAndUserId(sessionId, userId);
+
+    if (!session) {
+      throw new NotFoundException(ErrorCodes.Auth.SESSION_NOT_FOUND);
+    }
+
     await this.sessionsRepo.revoke(sessionId);
   }
 
   async revokeAllSessions(userId: string): Promise<void> {
     await this.sessionsRepo.revokeAllByUserId(userId);
+  }
+
+  async revokeAllSessionsExceptCurrent(userId: string, currentSessionId: string): Promise<void> {
+    await this.sessionsRepo.revokeAllByUserIdExcept(userId, currentSessionId);
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
