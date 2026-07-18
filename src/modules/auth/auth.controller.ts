@@ -102,7 +102,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    await this.authService.logout(sessionId);
+    await this.authService.logout(sessionId, userId);
     clearRefreshTokenCookie(res, this.config);
     clearCsrfTokenCookie(res, this.config);
     this.auditLog.log({
