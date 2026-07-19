@@ -118,8 +118,13 @@ export class TiresService {
     await this.tiresRepo.update(tireId, { status: TireStatus.STORED }, tx);
   }
 
-  async getHistory(id: string): Promise<{ tire: TireResponseDto; history: TireHistory }> {
+  async getHistory(
+    userId: string,
+    id: string,
+  ): Promise<{ tire: TireResponseDto; history: TireHistory }> {
     const tire = await this.getById(id);
+    await this.assertWorkspaceAccess(userId, tire.vehicleId);
+
     const changes = await this.tiresRepo.findTireChangesByTireId(id);
 
     const vehicle = await this.prisma.vehicle.findUnique({

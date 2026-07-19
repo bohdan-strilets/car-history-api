@@ -29,9 +29,10 @@ export class TimelineService {
     return this.timelineRepository.findMany(vehicleId, query);
   }
 
-  async getEvent(eventId: string) {
+  async getEvent(vehicleId: string, eventId: string) {
     const event = await this.timelineRepository.findById(eventId);
     if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
+    this.assertBelongsToVehicle(event, vehicleId);
     return event;
   }
 
@@ -110,9 +111,10 @@ export class TimelineService {
     return event;
   }
 
-  async updateEvent(eventId: string, dto: UpdateTimelineEventDto) {
+  async updateEvent(vehicleId: string, eventId: string, dto: UpdateTimelineEventDto) {
     const event = await this.timelineRepository.findById(eventId);
     if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
+    this.assertBelongsToVehicle(event, vehicleId);
 
     const updated = await this.timelineRepository.update(eventId, {
       title: dto.title,
@@ -151,9 +153,10 @@ export class TimelineService {
     return updated;
   }
 
-  async deleteEvent(eventId: string) {
+  async deleteEvent(vehicleId: string, eventId: string) {
     const event = await this.timelineRepository.findById(eventId);
     if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
+    this.assertBelongsToVehicle(event, vehicleId);
 
     if (event.type === TimelineType.DOCUMENT) {
       const raw = await this.timelineRepository.findRawById(eventId);
@@ -339,6 +342,12 @@ export class TimelineService {
     const count = await this.timelineRepository.countByType(vehicleId, type);
     if (count > 0) {
       throw new ConflictException(ErrorCodes.Timeline.EVENT_ALREADY_EXISTS);
+    }
+  }
+
+  private assertBelongsToVehicle(event: { vehicleId: string }, vehicleId: string): void {
+    if (event.vehicleId !== vehicleId) {
+      throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
     }
   }
 }

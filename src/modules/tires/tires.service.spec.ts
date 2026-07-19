@@ -305,9 +305,10 @@ describe('TiresService', () => {
     it('should return empty history when tire has no changes', async () => {
       tiresRepo.findById.mockResolvedValue(mockTire);
       tiresRepo.findTireChangesByTireId.mockResolvedValue([]);
-      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 50000 });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1', currentMileage: 50000 });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
 
-      const result = await service.getHistory('tire-123');
+      const result = await service.getHistory('user-123', 'tire-123');
 
       expect(result.history.periods).toHaveLength(0);
       expect(result.history.totalKmDriven).toBe(0);
@@ -316,7 +317,8 @@ describe('TiresService', () => {
 
     it('should build a completed period from install + remove pair', async () => {
       tiresRepo.findById.mockResolvedValue(mockTire);
-      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 60000 });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1', currentMileage: 60000 });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
       tiresRepo.findTireChangesByTireId.mockResolvedValue([
         {
           eventDate: new Date('2026-01-01'),
@@ -336,7 +338,7 @@ describe('TiresService', () => {
         },
       ]);
 
-      const result = await service.getHistory('tire-123');
+      const result = await service.getHistory('user-123', 'tire-123');
 
       expect(result.history.periods).toHaveLength(1);
       expect(result.history.periods[0]).toMatchObject({
@@ -351,7 +353,8 @@ describe('TiresService', () => {
 
     it('should build an ongoing period using current vehicle mileage', async () => {
       tiresRepo.findById.mockResolvedValue({ ...mockTire, status: TireStatus.MOUNTED });
-      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 70000 });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1', currentMileage: 70000 });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
       tiresRepo.findTireChangesByTireId.mockResolvedValue([
         {
           eventDate: new Date('2026-01-01'),
@@ -363,7 +366,7 @@ describe('TiresService', () => {
         },
       ]);
 
-      const result = await service.getHistory('tire-123');
+      const result = await service.getHistory('user-123', 'tire-123');
 
       expect(result.history.periods).toHaveLength(1);
       expect(result.history.periods[0]).toMatchObject({
@@ -378,7 +381,8 @@ describe('TiresService', () => {
 
     it('should handle multiple mount/unmount cycles', async () => {
       tiresRepo.findById.mockResolvedValue(mockTire);
-      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 80000 });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1', currentMileage: 80000 });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
       tiresRepo.findTireChangesByTireId.mockResolvedValue([
         {
           eventDate: new Date('2026-01-01'),
@@ -414,7 +418,7 @@ describe('TiresService', () => {
         },
       ]);
 
-      const result = await service.getHistory('tire-123');
+      const result = await service.getHistory('user-123', 'tire-123');
 
       expect(result.history.periods).toHaveLength(2);
       expect(result.history.totalMountCount).toBe(2);
@@ -423,7 +427,8 @@ describe('TiresService', () => {
 
     it('should still create a period when installedMileage is unknown', async () => {
       tiresRepo.findById.mockResolvedValue({ ...mockTire, status: TireStatus.MOUNTED });
-      prisma.vehicle.findUnique.mockResolvedValue({ currentMileage: 90000 });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1', currentMileage: 90000 });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
       tiresRepo.findTireChangesByTireId.mockResolvedValue([
         {
           eventDate: new Date('2026-01-01'),
@@ -435,7 +440,7 @@ describe('TiresService', () => {
         },
       ]);
 
-      const result = await service.getHistory('tire-123');
+      const result = await service.getHistory('user-123', 'tire-123');
 
       expect(result.history.periods).toHaveLength(1);
       expect(result.history.periods[0]).toMatchObject({
@@ -448,7 +453,7 @@ describe('TiresService', () => {
     it('should throw NotFoundException if tire not found', async () => {
       tiresRepo.findById.mockResolvedValue(null);
 
-      await expect(service.getHistory('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.getHistory('user-123', 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -27,7 +27,7 @@ export class TireController {
   }
 
   @Get(':id/history')
-  getHistory(@Param('id') id: string) {
-    return this.tiresService.getHistory(id);
+  getHistory(@CurrentUserId() userId: string, @Param('id') id: string) {
+    return this.tiresService.getHistory(userId, id);
   }
 }

@@ -40,18 +40,22 @@ export class TimelineController {
   }
 
   @Get(':eventId')
-  getEvent(@Param('eventId') eventId: string) {
-    return this.timelineService.getEvent(eventId);
+  getEvent(@Param('vehicleId') vehicleId: string, @Param('eventId') eventId: string) {
+    return this.timelineService.getEvent(vehicleId, eventId);
   }
 
   @Patch(':eventId')
-  updateEvent(@Param('eventId') eventId: string, @Body() dto: UpdateTimelineEventDto) {
-    return this.timelineService.updateEvent(eventId, dto);
+  updateEvent(
+    @Param('vehicleId') vehicleId: string,
+    @Param('eventId') eventId: string,
+    @Body() dto: UpdateTimelineEventDto,
+  ) {
+    return this.timelineService.updateEvent(vehicleId, eventId, dto);
   }
 
   @Delete(':eventId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteEvent(@Param('eventId') eventId: string) {
-    return this.timelineService.deleteEvent(eventId);
+  deleteEvent(@Param('vehicleId') vehicleId: string, @Param('eventId') eventId: string) {
+    return this.timelineService.deleteEvent(vehicleId, eventId);
   }
 }

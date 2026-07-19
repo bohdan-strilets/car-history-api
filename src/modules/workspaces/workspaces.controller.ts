@@ -19,7 +19,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
-import { WorkspaceMember as WorkspaceMemberEntity, Role } from '@prisma/client';
+import { Role, WorkspaceMember as WorkspaceMemberEntity } from '@prisma/client';
 import { Request } from 'express';
 
 import {
@@ -85,7 +85,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id/settings')
-  @WorkspaceMember()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   async updateSettings(@Param('id') workspaceId: string, @Body() dto: UpdateWorkspaceSettingsDto) {
     return this.workspacesService.updateSettings(workspaceId, dto);
