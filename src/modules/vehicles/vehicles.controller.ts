@@ -1,4 +1,10 @@
-import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
+import {
+  Auth,
+  CurrentUserId,
+  EmailVerified,
+  WorkspaceMember,
+  WorkspaceRole,
+} from '@common/decorators';
 import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
@@ -12,6 +18,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 
 import { CreateVehicleDto, UpdateVehicleDto, UpdateVehicleSpecsDto } from './dto';
 import { VehiclesService } from './vehicles.service';
@@ -34,6 +41,7 @@ export class VehiclesController {
   }
 
   @Post()
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   async create(
     @CurrentUserId() userId: string,
@@ -44,6 +52,7 @@ export class VehiclesController {
   }
 
   @Patch(':vehicleId')
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @UseGuards(VehicleAccessGuard)
   async update(
@@ -55,6 +64,7 @@ export class VehiclesController {
   }
 
   @Patch(':vehicleId/specs')
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @UseGuards(VehicleAccessGuard)
   async updateSpecs(
@@ -66,6 +76,7 @@ export class VehiclesController {
   }
 
   @Delete(':vehicleId')
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(VehicleAccessGuard)
@@ -74,6 +85,7 @@ export class VehiclesController {
   }
 
   @Post(':vehicleId/specs/ai')
+  @WorkspaceRole(Role.OWNER, Role.ADMIN)
   @EmailVerified()
   @UseGuards(VehicleAccessGuard)
   async fillSpecsWithAi(
