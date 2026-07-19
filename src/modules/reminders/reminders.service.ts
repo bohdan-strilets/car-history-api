@@ -1,4 +1,5 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { assertCanDeleteOwnedResource } from '@common/utils';
 import { Injectable } from '@nestjs/common';
 import {
   DocumentType,
@@ -6,6 +7,7 @@ import {
   Reminder,
   ReminderStatus,
   ReminderType,
+  Role,
 } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
@@ -33,9 +35,14 @@ export class RemindersService {
 
   // ─── Commands (manual) ────────────────────────────────────────────────────
 
-  async create(vehicleId: string, dto: CreateReminderDto): Promise<ReminderResponseDto> {
+  async create(
+    vehicleId: string,
+    dto: CreateReminderDto,
+    userId: string,
+  ): Promise<ReminderResponseDto> {
     const reminder = await this.remindersRepo.create({
       vehicleId,
+      createdBy: userId,
       type: dto.type,
       title: dto.title,
       description: dto.description ?? null,
@@ -105,12 +112,18 @@ export class RemindersService {
     return toReminderResponse(updated);
   }
 
-  async delete(vehicleId: string, id: string): Promise<void> {
+  async delete(vehicleId: string, id: string, memberRole: Role, userId: string): Promise<void> {
     const reminder = await this.getById(id);
 
     if (reminder.vehicleId !== vehicleId) {
       throw new ForbiddenException(ErrorCodes.Reminder.NOT_FOUND);
     }
+
+    assertCanDeleteOwnedResource({
+      memberRole,
+      resourceCreatedBy: reminder.createdBy,
+      userId,
+    });
 
     await this.remindersRepo.delete(id);
   }

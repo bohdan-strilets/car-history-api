@@ -1,4 +1,10 @@
-import { Auth, CurrentUserId, WorkspaceMember } from '@common/decorators';
+import {
+  Auth,
+  CurrentUserId,
+  CurrentWorkspaceMember,
+  EmailVerified,
+  WorkspaceMember,
+} from '@common/decorators';
 import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
@@ -13,6 +19,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { WorkspaceMember as WorkspaceMemberEntity } from '@prisma/client';
 
 import { CreateTimelineEventDto, TimelineQueryDto, UpdateTimelineEventDto } from './dto';
 import { TimelineService } from './timeline.service';
@@ -30,6 +37,7 @@ export class TimelineController {
   }
 
   @Post()
+  @EmailVerified()
   @HttpCode(HttpStatus.CREATED)
   createEvent(
     @Param('vehicleId') vehicleId: string,
@@ -45,6 +53,7 @@ export class TimelineController {
   }
 
   @Patch(':eventId')
+  @EmailVerified()
   updateEvent(
     @Param('vehicleId') vehicleId: string,
     @Param('eventId') eventId: string,
@@ -54,8 +63,14 @@ export class TimelineController {
   }
 
   @Delete(':eventId')
+  @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteEvent(@Param('vehicleId') vehicleId: string, @Param('eventId') eventId: string) {
-    return this.timelineService.deleteEvent(vehicleId, eventId);
+  deleteEvent(
+    @Param('vehicleId') vehicleId: string,
+    @Param('eventId') eventId: string,
+    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+    @CurrentUserId() userId: string,
+  ) {
+    return this.timelineService.deleteEvent(vehicleId, eventId, member.role, userId);
   }
 }

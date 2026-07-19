@@ -2,6 +2,7 @@ import { MaintenanceStatus, MaintenanceType } from '@prisma/client';
 
 export interface CreateMaintenanceInput {
   vehicleId: string;
+  createdBy?: string | null;
   type: MaintenanceType;
   title: string;
   intervalKm?: number | null;

@@ -123,8 +123,7 @@ describe('TiresService', () => {
       };
 
       tiresRepo.create.mockResolvedValue(mockTire);
-
-      await service.create('vehicle-123', dto);
+      await service.create('vehicle-123', dto, 'user-123');
 
       expect(tiresRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -147,8 +146,7 @@ describe('TiresService', () => {
       };
 
       tiresRepo.create.mockResolvedValue(mockTire);
-
-      await service.create('vehicle-123', dto);
+      await service.create('vehicle-123', dto, 'user-123');
 
       expect(tiresRepo.create).toHaveBeenCalledWith(expect.objectContaining({ quantity: 2 }));
     });
@@ -235,10 +233,8 @@ describe('TiresService', () => {
     it('should delete a stored tire', async () => {
       tiresRepo.findById.mockResolvedValue(mockTire);
       prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1' });
-      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
-
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'OWNER' });
       await service.delete('user-123', 'tire-123');
-
       expect(tiresRepo.delete).toHaveBeenCalledWith('tire-123');
     });
 
@@ -260,6 +256,24 @@ describe('TiresService', () => {
       prisma.workspaceMember.findUnique.mockResolvedValue(null);
 
       await expect(service.delete('other-user', 'tire-123')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should allow a MEMBER to delete their own tire', async () => {
+      tiresRepo.findById.mockResolvedValue({ ...mockTire, createdBy: 'user-123' });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1' });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
+
+      await service.delete('user-123', 'tire-123');
+
+      expect(tiresRepo.delete).toHaveBeenCalledWith('tire-123');
+    });
+
+    it("should throw ForbiddenException when a MEMBER tries to delete someone else's tire", async () => {
+      tiresRepo.findById.mockResolvedValue({ ...mockTire, createdBy: 'other-user' });
+      prisma.vehicle.findUnique.mockResolvedValue({ workspaceId: 'ws-1' });
+      prisma.workspaceMember.findUnique.mockResolvedValue({ role: 'MEMBER' });
+
+      await expect(service.delete('user-123', 'tire-123')).rejects.toThrow(ForbiddenException);
     });
   });
 

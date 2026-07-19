@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@common/exceptions';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MaintenanceType, Reminder, ReminderStatus, ReminderType } from '@prisma/client';
+import { MaintenanceType, Reminder, ReminderStatus, ReminderType, Role } from '@prisma/client';
 
 import { CreateReminderDto, UpdateReminderDto } from './dto';
 import { RemindersRepository } from './reminders.repository';
@@ -130,8 +130,7 @@ describe('RemindersService', () => {
       };
 
       remindersRepo.create.mockResolvedValue(mockReminder);
-
-      const result = await service.create('vehicle-123', createDto);
+      const result = await service.create('vehicle-123', createDto, 'user-123');
 
       expect(result).toBeDefined();
       expect(remindersRepo.create).toHaveBeenCalledWith(
@@ -154,8 +153,7 @@ describe('RemindersService', () => {
       };
 
       remindersRepo.create.mockResolvedValue(mockReminder2);
-
-      await service.create('vehicle-123', createDto);
+      await service.create('vehicle-123', createDto, 'user-123');
 
       expect(remindersRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -172,8 +170,7 @@ describe('RemindersService', () => {
       };
 
       remindersRepo.create.mockResolvedValue(mockReminder);
-
-      await service.create('vehicle-123', createDto);
+      await service.create('vehicle-123', createDto, 'user-123');
 
       expect(remindersRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -190,8 +187,7 @@ describe('RemindersService', () => {
       };
 
       remindersRepo.create.mockResolvedValue(mockReminder);
-
-      await service.create('vehicle-123', createDto);
+      await service.create('vehicle-123', createDto, 'user-123');
 
       const createCall = remindersRepo.create.mock.calls[0][0];
       expect(createCall.dueDate).toBeInstanceOf(Date);
@@ -367,9 +363,7 @@ describe('RemindersService', () => {
   describe('delete', () => {
     it('should delete reminder', async () => {
       remindersRepo.findById.mockResolvedValue(mockReminder);
-
-      await service.delete('vehicle-123', 'reminder-123');
-
+      await service.delete('vehicle-123', 'reminder-123', Role.OWNER, 'user-123');
       expect(remindersRepo.delete).toHaveBeenCalledWith('reminder-123');
     });
 
@@ -378,16 +372,16 @@ describe('RemindersService', () => {
         ...mockReminder,
         vehicleId: 'other-vehicle',
       });
-
-      await expect(service.delete('vehicle-123', 'reminder-123')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.delete('vehicle-123', 'reminder-123', Role.OWNER, 'user-123'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw NotFoundException if reminder not found', async () => {
       remindersRepo.findById.mockResolvedValue(null);
-
-      await expect(service.delete('vehicle-123', 'invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.delete('vehicle-123', 'invalid-id', Role.OWNER, 'user-123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

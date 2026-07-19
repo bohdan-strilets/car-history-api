@@ -2,7 +2,7 @@ import { ForbiddenException, NotFoundException } from '@common/exceptions';
 import { RemindersService } from '@modules/reminders';
 import { TimelineService } from '@modules/timeline';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MaintenanceInterval, MaintenanceStatus, MaintenanceType } from '@prisma/client';
+import { MaintenanceInterval, MaintenanceStatus, MaintenanceType, Role } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateMaintenanceDto, UpdateMaintenanceDto } from './dto';
@@ -128,8 +128,7 @@ describe('MaintenanceService', () => {
       };
 
       maintenanceRepo.create.mockResolvedValue(mockInterval);
-
-      const result = await service.create('vehicle-123', createDto);
+      const result = await service.create('vehicle-123', createDto, 'user-123');
 
       expect(result).toBeDefined();
       expect(maintenanceRepo.create).toHaveBeenCalledWith(
@@ -155,8 +154,7 @@ describe('MaintenanceService', () => {
       };
 
       maintenanceRepo.create.mockResolvedValue(mockInterval);
-
-      await service.create('vehicle-123', createDto);
+      await service.create('vehicle-123', createDto, 'user-123');
 
       expect(maintenanceRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ nextServiceMileage: 50000 }),
@@ -171,8 +169,7 @@ describe('MaintenanceService', () => {
       };
 
       maintenanceRepo.create.mockResolvedValue(mockInterval);
-
-      await service.create('vehicle-123', createDto);
+      await service.create('vehicle-123', createDto, 'user-123');
 
       expect(maintenanceRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ nextServiceMileage: null, nextServiceDate: null }),
@@ -303,9 +300,7 @@ describe('MaintenanceService', () => {
   describe('delete', () => {
     it('should delete interval and its synced reminder', async () => {
       maintenanceRepo.findById.mockResolvedValue(mockInterval);
-
-      await service.delete('vehicle-123', 'interval-123');
-
+      await service.delete('vehicle-123', 'interval-123', Role.OWNER, 'user-123');
       expect(remindersService.deleteByMaintenanceIntervalId).toHaveBeenCalledWith(
         'interval-123',
         fakeTx,
@@ -315,16 +310,16 @@ describe('MaintenanceService', () => {
 
     it('should throw ForbiddenException if interval not in vehicle', async () => {
       maintenanceRepo.findById.mockResolvedValue({ ...mockInterval, vehicleId: 'other-vehicle' });
-
-      await expect(service.delete('vehicle-123', 'interval-123')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.delete('vehicle-123', 'interval-123', Role.OWNER, 'user-123'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw NotFoundException if interval not found', async () => {
       maintenanceRepo.findById.mockResolvedValue(null);
-
-      await expect(service.delete('vehicle-123', 'invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.delete('vehicle-123', 'invalid-id', Role.OWNER, 'user-123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

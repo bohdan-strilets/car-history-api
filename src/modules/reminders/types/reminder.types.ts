@@ -2,6 +2,7 @@ import { ReminderStatus, ReminderType } from '@prisma/client';
 
 export interface CreateReminderInput {
   vehicleId: string;
+  createdBy?: string | null;
   maintenanceIntervalId?: string | null;
   documentId?: string | null;
   type: ReminderType;

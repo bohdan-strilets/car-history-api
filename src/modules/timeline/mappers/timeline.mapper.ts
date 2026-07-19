@@ -126,6 +126,7 @@ export const mapTimelineEvent = (event: TimelineEventWithRelations) => {
   return {
     id: event.id,
     vehicleId: event.vehicleId,
+    createdBy: event.createdBy,
     type: event.type,
     title: event.title,
     eventDate: event.eventDate,

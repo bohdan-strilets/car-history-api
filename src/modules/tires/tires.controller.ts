@@ -1,4 +1,4 @@
-import { Auth, EmailVerified, WorkspaceMember } from '@common/decorators';
+import { Auth, CurrentUserId, EmailVerified, WorkspaceMember } from '@common/decorators';
 import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
@@ -32,7 +32,8 @@ export class TiresController {
   create(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: CreateTireDto,
+    @CurrentUserId() userId: string,
   ): Promise<TireResponseDto> {
-    return this.tiresService.create(vehicleId, dto);
+    return this.tiresService.create(vehicleId, dto, userId);
   }
 }

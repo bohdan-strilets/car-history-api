@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, ErrorCodes } from '@common/exceptions';
+import { assertCanDeleteOwnedResource } from '@common/utils';
 import { MilestonesService } from '@modules/milestones';
 import { RemindersService } from '@modules/reminders';
 import { ServiceStationsService } from '@modules/service-stations';
 import { TiresService } from '@modules/tires';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Prisma, TimelineType, TireChangeType } from '@prisma/client';
+import { Prisma, Role, TimelineType, TireChangeType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 
 import { CreateTimelineEventDto, TimelineQueryDto, UpdateTimelineEventDto } from './dto';
@@ -51,7 +52,7 @@ export class TimelineService {
       }
     }
 
-    const data = this.buildCreateData(vehicleId, dto);
+    const data = this.buildCreateData(vehicleId, dto, userId);
     const event = await this.timelineRepository.create(data);
 
     await this.timelineRepository.createMileageLog(vehicleId, event.id, dto.mileage, dto.type);
@@ -153,10 +154,16 @@ export class TimelineService {
     return updated;
   }
 
-  async deleteEvent(vehicleId: string, eventId: string) {
+  async deleteEvent(vehicleId: string, eventId: string, memberRole: Role, userId: string) {
     const event = await this.timelineRepository.findById(eventId);
     if (!event) throw new NotFoundException(ErrorCodes.Timeline.EVENT_NOT_FOUND);
     this.assertBelongsToVehicle(event, vehicleId);
+
+    assertCanDeleteOwnedResource({
+      memberRole,
+      resourceCreatedBy: event.createdBy,
+      userId,
+    });
 
     if (event.type === TimelineType.DOCUMENT) {
       const raw = await this.timelineRepository.findRawById(eventId);
@@ -184,9 +191,11 @@ export class TimelineService {
   private buildCreateData(
     vehicleId: string,
     dto: CreateTimelineEventDto,
+    userId: string,
   ): CreateTimelineEventInput {
     const base: CreateTimelineEventInput = {
       vehicleId,
+      createdBy: userId,
       type: dto.type,
       title: dto.title,
       eventDate: new Date(dto.eventDate),

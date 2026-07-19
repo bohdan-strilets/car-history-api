@@ -8,34 +8,39 @@ datasource db {
 
 // User 
 model User {
-  id                      String                   @id @default(cuid())
-  email                   String                   @unique
-  emailVerified           Boolean                  @default(false)
-  emailVerifiedAt         DateTime?
-  firstName               String
-  lastName                String
-  avatarUrl               String?
-  status                  UserStatus               @default(ACTIVE)
-  lastLoginAt             DateTime?
-  loginCount              Int                      @default(0)
-  onboardingCompleted     Boolean                  @default(false)
-  deletedAt               DateTime?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  userSettings            UserSettings?
-  authCredentials         AuthCredentials?
-  sessions                Session[]
-  emailVerificationTokens EmailVerificationToken[]
-  emailChangeTokens       EmailChangeToken[]
-  passwordResetTokens     PasswordResetToken[]
-  workspaces              Workspace[]
-  workspaceMembers        WorkspaceMember[]
-  workspaceInvites        WorkspaceInvite[]
-  vehicles                Vehicle[]
-  vehicleMilestones       VehicleMilestone[]
-  serviceStations         ServiceStation[]
-  medias                  Media[]
-  aiConversations         AiConversation[]
+  id                          String                   @id @default(cuid())
+  email                       String                   @unique
+  emailVerified               Boolean                  @default(false)
+  emailVerifiedAt             DateTime?
+  firstName                   String
+  lastName                    String
+  avatarUrl                   String?
+  status                      UserStatus               @default(ACTIVE)
+  lastLoginAt                 DateTime?
+  loginCount                  Int                      @default(0)
+  onboardingCompleted         Boolean                  @default(false)
+  deletedAt                   DateTime?
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  userSettings                UserSettings?
+  authCredentials             AuthCredentials?
+  sessions                    Session[]
+  emailVerificationTokens     EmailVerificationToken[]
+  emailChangeTokens           EmailChangeToken[]
+  passwordResetTokens         PasswordResetToken[]
+  workspaces                  Workspace[]
+  workspaceMembers            WorkspaceMember[]
+  workspaceInvites            WorkspaceInvite[]
+  vehicles                    Vehicle[]
+  vehicleMilestones           VehicleMilestone[]
+  serviceStations             ServiceStation[]
+  medias                      Media[]
+  aiConversations             AiConversation[]
+  createdTimelineEvents       TimelineEvent[]          @relation("TimelineEventCreatedBy")
+  createdReminders            Reminder[]               @relation("ReminderCreatedBy")
+  createdMaintenanceIntervals MaintenanceInterval[]    @relation("MaintenanceIntervalCreatedBy")
+  createdTires                Tire[]                   @relation("TireCreatedBy")
+  maintenanceIntervals        MaintenanceInterval[]
 
   @@map("users")
 }
@@ -360,6 +365,7 @@ enum VehicleStatus {
 model MaintenanceInterval {
   id                 String            @id @default(cuid())
   vehicleId          String
+  createdBy          String?
   type               MaintenanceType
   title              String
   intervalKm         Int?
@@ -373,7 +379,10 @@ model MaintenanceInterval {
   updatedAt          DateTime          @updatedAt
 
   vehicle  Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  creator  User?     @relation("MaintenanceIntervalCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   services Service[]
+  user     User?     @relation(fields: [userId], references: [id])
+  userId   String?
 
   @@map("maintenance_intervals")
 }
@@ -401,6 +410,7 @@ enum MaintenanceStatus {
 model Tire {
   id                String     @id @default(cuid())
   vehicleId         String
+  createdBy         String?
   brand             String
   model             String
   type              TireType
@@ -417,6 +427,7 @@ model Tire {
   updatedAt         DateTime   @updatedAt
 
   vehicle     Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  creator     User?        @relation("TireCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   tireChanges TireChange[]
 
   @@map("tires")
@@ -467,6 +478,7 @@ enum MileageSource {
 model Reminder {
   id                    String         @id @default(cuid())
   vehicleId             String
+  createdBy             String?
   maintenanceIntervalId String?
   documentId            String?
   type                  ReminderType
@@ -480,6 +492,7 @@ model Reminder {
   updatedAt             DateTime       @updatedAt
 
   vehicle       Vehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  creator       User?          @relation("ReminderCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   notifications Notification[]
 
   @@map("reminders")
@@ -566,6 +579,7 @@ model VehicleMilestone {
 model TimelineEvent {
   id               String       @id @default(cuid())
   vehicleId        String
+  createdBy        String?
   serviceStationId String?
   type             TimelineType
   title            String
@@ -578,6 +592,7 @@ model TimelineEvent {
   updatedAt        DateTime     @updatedAt
 
   vehicle        Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  creator        User?           @relation("TimelineEventCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   serviceStation ServiceStation? @relation(fields: [serviceStationId], references: [id], onDelete: SetNull)
 
   refuel     Refuel?
@@ -829,6 +844,7 @@ model ServiceStation {
 
 enum ServiceStationType {
   MECHANIC
+
   TIRE_SHOP
   CAR_WASH
   FUEL_STATION

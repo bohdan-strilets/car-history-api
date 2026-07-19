@@ -1,4 +1,10 @@
-import { Auth, EmailVerified, WorkspaceMember } from '@common/decorators';
+import {
+  Auth,
+  CurrentUserId,
+  CurrentWorkspaceMember,
+  EmailVerified,
+  WorkspaceMember,
+} from '@common/decorators';
 import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
@@ -12,6 +18,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { WorkspaceMember as WorkspaceMemberEntity } from '@prisma/client';
 
 import { CreateReminderDto, ReminderResponseDto, UpdateReminderDto } from './dto';
 import { RemindersService } from './reminders.service';
@@ -33,8 +40,9 @@ export class RemindersController {
   create(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: CreateReminderDto,
+    @CurrentUserId() userId: string,
   ): Promise<ReminderResponseDto> {
-    return this.remindersService.create(vehicleId, dto);
+    return this.remindersService.create(vehicleId, dto, userId);
   }
 
   @Patch(':id')
@@ -68,7 +76,12 @@ export class RemindersController {
   @Delete(':id')
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('vehicleId') vehicleId: string, @Param('id') id: string): Promise<void> {
-    return this.remindersService.delete(vehicleId, id);
+  delete(
+    @Param('vehicleId') vehicleId: string,
+    @Param('id') id: string,
+    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+    @CurrentUserId() userId: string,
+  ): Promise<void> {
+    return this.remindersService.delete(vehicleId, id, member.role, userId);
   }
 }

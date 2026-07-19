@@ -1,6 +1,7 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { assertCanDeleteOwnedResource } from '@common/utils';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Tire, TireChangeType, TireStatus } from '@prisma/client';
+import { Prisma, Role, Tire, TireChangeType, TireStatus } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateTireDto, TireResponseDto, UpdateTireDto } from './dto';
@@ -30,9 +31,10 @@ export class TiresService {
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
-  async create(vehicleId: string, dto: CreateTireDto): Promise<TireResponseDto> {
+  async create(vehicleId: string, dto: CreateTireDto, userId: string): Promise<TireResponseDto> {
     const tire = await this.tiresRepo.create({
       vehicleId,
+      createdBy: userId,
       brand: dto.brand,
       model: dto.model,
       type: dto.type,
@@ -86,11 +88,17 @@ export class TiresService {
 
   async delete(userId: string, id: string): Promise<void> {
     const tire = await this.getById(id);
-    await this.assertWorkspaceAccess(userId, tire.vehicleId);
+    const memberRole = await this.assertWorkspaceAccess(userId, tire.vehicleId);
 
     if (tire.status === TireStatus.MOUNTED) {
       throw new ForbiddenException(ErrorCodes.Tire.ALREADY_MOUNTED);
     }
+
+    assertCanDeleteOwnedResource({
+      memberRole,
+      resourceCreatedBy: tire.createdBy,
+      userId,
+    });
 
     await this.tiresRepo.delete(id);
   }
@@ -230,7 +238,7 @@ export class TiresService {
     return Object.entries(dto).some(([key, value]) => key !== 'status' && value !== undefined);
   }
 
-  private async assertWorkspaceAccess(userId: string, vehicleId: string): Promise<void> {
+  private async assertWorkspaceAccess(userId: string, vehicleId: string): Promise<Role> {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },
       select: { workspaceId: true },
@@ -243,5 +251,7 @@ export class TiresService {
     });
 
     if (!member) throw new ForbiddenException(ErrorCodes.Workspace.ACCESS_DENIED);
+
+    return member.role;
   }
 }

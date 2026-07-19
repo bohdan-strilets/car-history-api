@@ -39,6 +39,7 @@ export type MappedTimelineEvent = ReturnType<typeof mapTimelineEvent>;
 export type CreateTimelineEventInput = {
   // shared
   vehicleId: string;
+  createdBy?: string | null;
   type: TimelineType;
   title: string;
   eventDate: Date;

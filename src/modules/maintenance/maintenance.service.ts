@@ -1,8 +1,9 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { assertCanDeleteOwnedResource } from '@common/utils';
 import { RemindersService } from '@modules/reminders';
 import { TimelineService } from '@modules/timeline';
 import { Injectable } from '@nestjs/common';
-import { MaintenanceInterval, MaintenanceStatus } from '@prisma/client';
+import { MaintenanceInterval, MaintenanceStatus, Role } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateMaintenanceDto, MaintenanceResponseDto, UpdateMaintenanceDto } from './dto';
@@ -33,7 +34,11 @@ export class MaintenanceService {
 
   // ─── Commands ─────────────────────────────────────────────────────────────
 
-  async create(vehicleId: string, dto: CreateMaintenanceDto): Promise<MaintenanceResponseDto> {
+  async create(
+    vehicleId: string,
+    dto: CreateMaintenanceDto,
+    userId: string,
+  ): Promise<MaintenanceResponseDto> {
     const { nextServiceMileage, nextServiceDate } = this.calculateNext({
       intervalKm: dto.intervalKm ?? null,
       intervalMonths: dto.intervalMonths ?? null,
@@ -45,6 +50,7 @@ export class MaintenanceService {
       const created = await this.maintenanceRepo.create(
         {
           vehicleId,
+          createdBy: userId,
           type: dto.type,
           title: dto.title,
           intervalKm: dto.intervalKm ?? null,
@@ -155,12 +161,18 @@ export class MaintenanceService {
     return toMaintenanceResponse(updated);
   }
 
-  async delete(vehicleId: string, id: string): Promise<void> {
+  async delete(vehicleId: string, id: string, memberRole: Role, userId: string): Promise<void> {
     const interval = await this.getById(id);
 
     if (interval.vehicleId !== vehicleId) {
       throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
     }
+
+    assertCanDeleteOwnedResource({
+      memberRole,
+      resourceCreatedBy: interval.createdBy,
+      userId,
+    });
 
     await this.prisma.$transaction(async (tx) => {
       await this.remindersService.deleteByMaintenanceIntervalId(id, tx);

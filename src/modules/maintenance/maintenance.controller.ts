@@ -1,4 +1,10 @@
-import { Auth, EmailVerified, WorkspaceMember } from '@common/decorators';
+import {
+  Auth,
+  CurrentUserId,
+  CurrentWorkspaceMember,
+  EmailVerified,
+  WorkspaceMember,
+} from '@common/decorators';
 import { VehicleAccessGuard } from '@common/guards';
 import {
   Body,
@@ -12,6 +18,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { WorkspaceMember as WorkspaceMemberEntity } from '@prisma/client';
 
 import {
   CreateMaintenanceDto,
@@ -38,8 +45,9 @@ export class MaintenanceController {
   create(
     @Param('vehicleId') vehicleId: string,
     @Body() dto: CreateMaintenanceDto,
+    @CurrentUserId() userId: string,
   ): Promise<MaintenanceResponseDto> {
-    return this.maintenanceService.create(vehicleId, dto);
+    return this.maintenanceService.create(vehicleId, dto, userId);
   }
 
   @Patch(':id')
@@ -86,7 +94,12 @@ export class MaintenanceController {
   @Delete(':id')
   @EmailVerified()
   @HttpCode(HttpStatus.NO_CONTENT)
-  delete(@Param('vehicleId') vehicleId: string, @Param('id') id: string): Promise<void> {
-    return this.maintenanceService.delete(vehicleId, id);
+  delete(
+    @Param('vehicleId') vehicleId: string,
+    @Param('id') id: string,
+    @CurrentWorkspaceMember() member: WorkspaceMemberEntity,
+    @CurrentUserId() userId: string,
+  ): Promise<void> {
+    return this.maintenanceService.delete(vehicleId, id, member.role, userId);
   }
 }

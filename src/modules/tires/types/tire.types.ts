@@ -1,5 +1,6 @@
 export interface CreateTireInput {
   vehicleId: string;
+  createdBy?: string | null;
   brand: string;
   model: string;
   type: string;
