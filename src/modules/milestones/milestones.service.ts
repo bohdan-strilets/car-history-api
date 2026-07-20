@@ -1,5 +1,6 @@
 import { TIME_UNITS } from '@common/constants';
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { MilestonesRepository } from './milestones.repository';
 import { CheckContext, MilestoneCondition, MilestoneResult, VehicleContext } from './types';
@@ -132,5 +133,9 @@ export class MilestonesService {
         }
       }
     }
+  }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.milestonesRepository.deleteAllByVehicleId(vehicleId, tx);
   }
 }

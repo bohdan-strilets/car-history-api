@@ -73,4 +73,9 @@ export class RemindersRepository {
     const client = tx ?? this.prisma;
     await client.reminder.deleteMany({ where: { documentId } });
   }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.reminder.deleteMany({ where: { vehicleId } });
+  }
 }

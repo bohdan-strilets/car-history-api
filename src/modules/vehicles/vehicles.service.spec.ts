@@ -1,14 +1,15 @@
-import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
+import { ForbiddenException, NotFoundException } from '@common/exceptions';
 import { AiService } from '@modules/ai';
+import { MaintenanceService } from '@modules/maintenance';
+import { MilestonesService } from '@modules/milestones';
+import { RemindersService } from '@modules/reminders';
+import { TimelineService } from '@modules/timeline';
+import { TiresService } from '@modules/tires';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BodyType, DriveType, FuelType, Transmission } from '@prisma/client';
+import { PrismaService } from '@prisma/prisma.service';
 
-import {
-  CreateVehicleDto,
-  UpdateVehicleDto,
-  UpdateVehicleSpecsDto,
-  VehicleResponseDto,
-} from './dto';
+import { CreateVehicleDto, UpdateVehicleDto, UpdateVehicleSpecsDto } from './dto';
 import { VehiclesRepo } from './vehicles.repository';
 import { VehiclesService } from './vehicles.service';
 
@@ -16,6 +17,7 @@ describe('VehiclesService', () => {
   let service: VehiclesService;
   let vehiclesRepo: jest.Mocked<VehiclesRepo>;
   let aiService: jest.Mocked<AiService>;
+  let prisma: jest.Mocked<PrismaService>;
 
   const mockVehicle = {
     id: 'vehicle-123',
@@ -84,12 +86,50 @@ describe('VehiclesService', () => {
             fillVehicleSpecs: jest.fn(),
           },
         },
+        {
+          provide: TimelineService,
+          useValue: {
+            softDeleteAllByVehicleId: jest.fn(),
+            deleteAllMileageLogsByVehicleId: jest.fn(),
+          },
+        },
+        {
+          provide: RemindersService,
+          useValue: {
+            deleteAllByVehicleId: jest.fn(),
+          },
+        },
+        {
+          provide: MaintenanceService,
+          useValue: {
+            deleteAllByVehicleId: jest.fn(),
+          },
+        },
+        {
+          provide: TiresService,
+          useValue: {
+            deleteAllByVehicleId: jest.fn(),
+          },
+        },
+        {
+          provide: MilestonesService,
+          useValue: {
+            deleteAllByVehicleId: jest.fn(),
+          },
+        },
+        {
+          provide: PrismaService,
+          useValue: {
+            $transaction: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<VehiclesService>(VehiclesService);
     vehiclesRepo = module.get(VehiclesRepo) as jest.Mocked<VehiclesRepo>;
     aiService = module.get(AiService) as jest.Mocked<AiService>;
+    prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
   });
 
   afterEach(() => {
@@ -306,12 +346,13 @@ describe('VehiclesService', () => {
   });
 
   describe('delete', () => {
-    it('should soft delete vehicle from workspace', async () => {
+    it('should soft delete vehicle and cascade child data', async () => {
       vehiclesRepo.findById.mockResolvedValue(mockVehicleWithOwner as any);
+      prisma.$transaction.mockImplementation((callback) => callback({} as any));
 
       await service.delete('workspace-123', 'vehicle-123');
 
-      expect(vehiclesRepo.softDelete).toHaveBeenCalledWith('vehicle-123');
+      expect(vehiclesRepo.softDelete).toHaveBeenCalledWith('vehicle-123', expect.anything());
     });
 
     it('should throw ForbiddenException if vehicle in different workspace', async () => {

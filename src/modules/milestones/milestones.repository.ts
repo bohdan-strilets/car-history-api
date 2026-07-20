@@ -1,6 +1,6 @@
 import { VehiclePurchaseInfo } from '@modules/vehicles';
 import { Injectable } from '@nestjs/common';
-import { TimelineType } from '@prisma/client';
+import { Prisma, TimelineType } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { vehicleSelect } from './selects';
@@ -102,5 +102,10 @@ export class MilestonesRepository {
         purchaseInfo: true,
       },
     });
+  }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.vehicleMilestone.deleteMany({ where: { vehicleId } });
   }
 }

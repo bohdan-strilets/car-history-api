@@ -74,4 +74,9 @@ export class TiresRepository {
       removedDate: c.removedDate,
     }));
   }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.tire.deleteMany({ where: { vehicleId } });
+  }
 }

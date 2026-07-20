@@ -186,6 +186,17 @@ export class TimelineService {
     }
   }
 
+  async softDeleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.timelineRepository.softDeleteAllByVehicleId(vehicleId, tx);
+  }
+
+  async deleteAllMileageLogsByVehicleId(
+    vehicleId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    await this.timelineRepository.deleteAllMileageLogsByVehicleId(vehicleId, tx);
+  }
+
   // ─── Builder ───────────────────────────────────────────────────────────────
 
   private buildCreateData(

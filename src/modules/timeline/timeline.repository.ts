@@ -189,6 +189,22 @@ export class TimelineRepository {
     });
   }
 
+  async softDeleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.timelineEvent.updateMany({
+      where: { vehicleId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  async deleteAllMileageLogsByVehicleId(
+    vehicleId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.mileageLog.deleteMany({ where: { vehicleId } });
+  }
+
   async getVehicleCurrentMileage(vehicleId: string): Promise<number> {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { id: vehicleId },

@@ -1,6 +1,12 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { AiService } from '@modules/ai';
+import { MaintenanceService } from '@modules/maintenance';
+import { MilestonesService } from '@modules/milestones';
+import { RemindersService } from '@modules/reminders';
+import { TimelineService } from '@modules/timeline';
+import { TiresService } from '@modules/tires';
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '@prisma/prisma.service';
 import { PrismaTxClient } from '@prisma/prisma.types';
 
 import {
@@ -18,6 +24,12 @@ export class VehiclesService {
   constructor(
     private readonly vehiclesRepo: VehiclesRepo,
     private readonly aiService: AiService,
+    private readonly timelineService: TimelineService,
+    private readonly remindersService: RemindersService,
+    private readonly maintenanceService: MaintenanceService,
+    private readonly tiresService: TiresService,
+    private readonly milestonesService: MilestonesService,
+    private readonly prisma: PrismaService,
   ) {}
 
   // ─── Queries ──────────────────────────────────────────────────────────────
@@ -93,7 +105,15 @@ export class VehiclesService {
       throw new ForbiddenException(ErrorCodes.Vehicle.ACCESS_DENIED);
     }
 
-    await this.vehiclesRepo.softDelete(vehicleId);
+    await this.prisma.$transaction(async (tx) => {
+      await this.remindersService.deleteAllByVehicleId(vehicleId, tx);
+      await this.maintenanceService.deleteAllByVehicleId(vehicleId, tx);
+      await this.tiresService.deleteAllByVehicleId(vehicleId, tx);
+      await this.timelineService.softDeleteAllByVehicleId(vehicleId, tx);
+      await this.timelineService.deleteAllMileageLogsByVehicleId(vehicleId, tx);
+      await this.milestonesService.deleteAllByVehicleId(vehicleId, tx);
+      await this.vehiclesRepo.softDelete(vehicleId, tx);
+    });
   }
 
   async softDeleteAllByWorkspaceId(workspaceId: string, tx?: PrismaTxClient): Promise<void> {

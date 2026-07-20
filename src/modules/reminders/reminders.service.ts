@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import {
   DocumentType,
   MaintenanceInterval,
+  Prisma,
   Reminder,
   ReminderStatus,
   ReminderType,
@@ -212,11 +213,12 @@ export class RemindersService {
     }
   }
 
-  async deleteByDocumentId(
-    documentId: string,
-    tx?: Parameters<Parameters<PrismaService['$transaction']>[0]>[0],
-  ): Promise<void> {
+  async deleteByDocumentId(documentId: string, tx?: Prisma.TransactionClient): Promise<void> {
     await this.remindersRepo.deleteByDocumentId(documentId, tx);
+  }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.remindersRepo.deleteAllByVehicleId(vehicleId, tx);
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────

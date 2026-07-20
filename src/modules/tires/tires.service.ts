@@ -254,4 +254,8 @@ export class TiresService {
 
     return member.role;
   }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.tiresRepo.deleteAllByVehicleId(vehicleId, tx);
+  }
 }

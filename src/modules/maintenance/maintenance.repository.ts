@@ -41,4 +41,9 @@ export class MaintenanceRepository {
     const client = tx ?? this.prisma;
     await client.maintenanceInterval.delete({ where: { id } });
   }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.maintenanceInterval.deleteMany({ where: { vehicleId } });
+  }
 }

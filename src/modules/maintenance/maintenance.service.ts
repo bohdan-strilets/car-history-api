@@ -3,7 +3,7 @@ import { assertCanDeleteOwnedResource } from '@common/utils';
 import { RemindersService } from '@modules/reminders';
 import { TimelineService } from '@modules/timeline';
 import { Injectable } from '@nestjs/common';
-import { MaintenanceInterval, MaintenanceStatus, Role } from '@prisma/client';
+import { MaintenanceInterval, MaintenanceStatus, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateMaintenanceDto, MaintenanceResponseDto, UpdateMaintenanceDto } from './dto';
@@ -227,6 +227,10 @@ export class MaintenanceService {
     });
 
     return toMaintenanceResponse(updated);
+  }
+
+  async deleteAllByVehicleId(vehicleId: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.maintenanceRepo.deleteAllByVehicleId(vehicleId, tx);
   }
 
   // ─── Private ──────────────────────────────────────────────────────────────
