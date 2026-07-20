@@ -54,4 +54,12 @@ export class VehiclesRepo {
       include: { owner: { select: vehicleUserInfoSelect } },
     });
   }
+
+  async softDeleteAllByWorkspaceId(workspaceId: string, tx?: PrismaTxClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.vehicle.updateMany({
+      where: { workspaceId, deletedAt: null },
+      data: { deletedAt: new Date(), status: 'DELETED' },
+    });
+  }
 }

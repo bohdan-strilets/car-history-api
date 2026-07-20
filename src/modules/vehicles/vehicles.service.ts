@@ -1,6 +1,7 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { AiService } from '@modules/ai';
 import { Injectable } from '@nestjs/common';
+import { PrismaTxClient } from '@prisma/prisma.types';
 
 import {
   CreateVehicleDto,
@@ -93,6 +94,10 @@ export class VehiclesService {
     }
 
     await this.vehiclesRepo.softDelete(vehicleId);
+  }
+
+  async softDeleteAllByWorkspaceId(workspaceId: string, tx?: PrismaTxClient): Promise<void> {
+    await this.vehiclesRepo.softDeleteAllByWorkspaceId(workspaceId, tx);
   }
 
   async fillSpecsWithAi(workspaceId: string, vehicleId: string): Promise<VehicleResponseDto> {

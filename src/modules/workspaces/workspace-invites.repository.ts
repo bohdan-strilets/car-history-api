@@ -63,4 +63,9 @@ export class WorkspaceInvitesRepo {
   async deleteById(id: string): Promise<void> {
     await this.prisma.workspaceInvite.delete({ where: { id } });
   }
+
+  async deleteAllByWorkspaceId(workspaceId: string, tx?: PrismaTxClient): Promise<void> {
+    const client = tx ?? this.prisma;
+    await client.workspaceInvite.deleteMany({ where: { workspaceId } });
+  }
 }

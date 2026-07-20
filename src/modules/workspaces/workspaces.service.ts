@@ -10,6 +10,7 @@ import {
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
 import { UsersService } from '@modules/users/users.service';
+import { VehiclesService } from '@modules/vehicles';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InviteStatus, Role, Workspace, WorkspaceInvite, WorkspaceMember } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -49,6 +50,7 @@ export class WorkspacesService {
     private readonly workspaceInvitesRepo: WorkspaceInvitesRepo,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly vehiclesService: VehiclesService,
     private readonly mailService: MailService,
     private readonly config: AppConfigService,
     private readonly prisma: PrismaService,
@@ -110,10 +112,21 @@ export class WorkspacesService {
 
   async delete(workspaceId: string, userId: string): Promise<void> {
     const workspace = await this.getById(workspaceId);
+
     if (workspace.ownerId !== userId) {
       throw new ForbiddenException(ErrorCodes.Workspace.ACCESS_DENIED);
     }
-    await this.workspacesRepo.softDelete(workspaceId);
+
+    const membersCount = await this.workspaceMembersRepo.countByWorkspaceId(workspaceId);
+    if (membersCount > 1) {
+      throw new ConflictException(ErrorCodes.Workspace.HAS_OTHER_MEMBERS);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.vehiclesService.softDeleteAllByWorkspaceId(workspaceId, tx);
+      await this.workspaceInvitesRepo.deleteAllByWorkspaceId(workspaceId, tx);
+      await this.workspacesRepo.softDelete(workspaceId, tx);
+    });
   }
 
   // ─── Settings ─────────────────────────────────────────────────────────────
@@ -187,7 +200,18 @@ export class WorkspacesService {
       throw new ForbiddenException(ErrorCodes.Workspace.INSUFFICIENT_ROLE);
     }
 
+    const [workspace, targetUser] = await Promise.all([
+      this.getById(workspaceId),
+      this.usersService.getById(target.userId),
+    ]);
+
     await this.workspaceMembersRepo.delete(memberId);
+
+    await this.mailService.sendRemovedFromWorkspace({
+      to: targetUser.email,
+      firstName: targetUser.firstName,
+      workspaceName: workspace.name,
+    });
   }
 
   async leaveWorkspace(

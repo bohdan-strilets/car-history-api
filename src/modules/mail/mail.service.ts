@@ -12,6 +12,7 @@ import {
   NewDeviceLoginParams,
   PasswordChangedParams,
   ReminderNotificationParams,
+  RemovedFromWorkspaceParams,
   ResetPasswordParams,
   WelcomeParams,
   WorkspaceInviteParams,
@@ -24,6 +25,7 @@ import {
   NewDeviceLoginTemplate,
   PasswordChangedTemplate,
   ReminderNotificationTemplate,
+  RemovedFromWorkspaceTemplate,
   ResetPasswordTemplate,
   WelcomeTemplate,
   WorkspaceInviteTemplate,
@@ -141,6 +143,16 @@ export class MailService {
       WorkspaceInviteTemplate({ firstName, invitedByName, workspaceName, role, inviteUrl }),
     );
     const subject = `Zaproszenie do workspace ${workspaceName} — Arvino`;
+    await this.send({ to, subject, html });
+  }
+
+  async sendRemovedFromWorkspace({
+    to,
+    firstName,
+    workspaceName,
+  }: RemovedFromWorkspaceParams): Promise<void> {
+    const html = await render(RemovedFromWorkspaceTemplate({ firstName, workspaceName }));
+    const subject = `Usunięto Cię z workspace ${workspaceName} — Arvino`;
     await this.send({ to, subject, html });
   }
 

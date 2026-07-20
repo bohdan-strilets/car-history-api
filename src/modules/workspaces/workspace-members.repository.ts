@@ -43,6 +43,10 @@ export class WorkspaceMembersRepo {
     return this.prisma.workspaceMember.findUnique({ where: { id: memberId } });
   }
 
+  async countByWorkspaceId(workspaceId: string): Promise<number> {
+    return this.prisma.workspaceMember.count({ where: { workspaceId } });
+  }
+
   async updateRole(memberId: string, role: Role, tx?: PrismaTxClient): Promise<WorkspaceMember> {
     const client = tx ?? this.prisma;
     return client.workspaceMember.update({

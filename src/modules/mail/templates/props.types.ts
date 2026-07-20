@@ -81,6 +81,11 @@ export interface WorkspaceInviteProps {
   inviteUrl: string;
 }
 
+export interface RemovedFromWorkspaceProps {
+  firstName: string;
+  workspaceName: string;
+}
+
 export interface ReminderNotificationProps {
   firstName: string;
   reminderTitle: string;

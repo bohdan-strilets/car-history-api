@@ -52,6 +52,10 @@ export interface WorkspaceInviteParams extends BaseTemplateParams {
   inviteUrl: string;
 }
 
+export interface RemovedFromWorkspaceParams extends BaseTemplateParams {
+  workspaceName: string;
+}
+
 export interface ReminderNotificationParams extends BaseTemplateParams {
   reminderTitle: string;
   dueDate: string;

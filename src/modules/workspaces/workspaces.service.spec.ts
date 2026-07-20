@@ -1,13 +1,9 @@
 import { TIME_UNITS } from '@common/constants';
-import {
-  ConflictException,
-  ErrorCodes,
-  ForbiddenException,
-  NotFoundException,
-} from '@common/exceptions';
+import { ConflictException, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { AppConfigService } from '@config/config.service';
 import { MailService } from '@modules/mail';
 import { UsersService } from '@modules/users/users.service';
+import { VehiclesService } from '@modules/vehicles';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InviteStatus, Role, UserStatus, Workspace } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
@@ -32,6 +28,7 @@ describe('WorkspacesService', () => {
   let workspaceSettingsRepo: jest.Mocked<WorkspaceSettingsRepo>;
   let workspaceInvitesRepo: jest.Mocked<WorkspaceInvitesRepo>;
   let usersService: jest.Mocked<UsersService>;
+  let vehiclesService: jest.Mocked<VehiclesService>;
   let mailService: jest.Mocked<MailService>;
   let config: jest.Mocked<AppConfigService>;
   let prisma: jest.Mocked<PrismaService>;
@@ -111,6 +108,7 @@ describe('WorkspacesService', () => {
             findAllByWorkspaceId: jest.fn(),
             findById: jest.fn(),
             findByIdWithUser: jest.fn(),
+            countByWorkspaceId: jest.fn(),
             create: jest.fn(),
             updateRole: jest.fn(),
             delete: jest.fn(),
@@ -131,6 +129,7 @@ describe('WorkspacesService', () => {
             findByToken: jest.fn(),
             create: jest.fn(),
             updateStatus: jest.fn(),
+            deleteAllByWorkspaceId: jest.fn(),
           },
         },
         {
@@ -141,9 +140,16 @@ describe('WorkspacesService', () => {
           },
         },
         {
+          provide: VehiclesService,
+          useValue: {
+            softDeleteAllByWorkspaceId: jest.fn(),
+          },
+        },
+        {
           provide: MailService,
           useValue: {
             sendWorkspaceInvite: jest.fn(),
+            sendRemovedFromWorkspace: jest.fn(),
           },
         },
         {
@@ -167,6 +173,7 @@ describe('WorkspacesService', () => {
     workspaceSettingsRepo = module.get(WorkspaceSettingsRepo) as jest.Mocked<WorkspaceSettingsRepo>;
     workspaceInvitesRepo = module.get(WorkspaceInvitesRepo) as jest.Mocked<WorkspaceInvitesRepo>;
     usersService = module.get(UsersService) as jest.Mocked<UsersService>;
+    vehiclesService = module.get(VehiclesService) as jest.Mocked<VehiclesService>;
     mailService = module.get(MailService) as jest.Mocked<MailService>;
     config = module.get(AppConfigService) as jest.Mocked<AppConfigService>;
     prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
@@ -339,12 +346,22 @@ describe('WorkspacesService', () => {
   });
 
   describe('delete', () => {
-    it('should delete workspace if user is owner', async () => {
+    it('should delete workspace if user is owner and no other members', async () => {
       workspacesRepo.findById.mockResolvedValue(mockWorkspace);
+      workspaceMembersRepo.countByWorkspaceId.mockResolvedValue(1);
+      prisma.$transaction.mockImplementation((callback) => callback({} as any));
 
       await service.delete('workspace-123', 'user-123');
 
-      expect(workspacesRepo.softDelete).toHaveBeenCalledWith('workspace-123');
+      expect(vehiclesService.softDeleteAllByWorkspaceId).toHaveBeenCalledWith(
+        'workspace-123',
+        expect.anything(),
+      );
+      expect(workspaceInvitesRepo.deleteAllByWorkspaceId).toHaveBeenCalledWith(
+        'workspace-123',
+        expect.anything(),
+      );
+      expect(workspacesRepo.softDelete).toHaveBeenCalledWith('workspace-123', expect.anything());
     });
 
     it('should throw ForbiddenException if user is not owner', async () => {
@@ -354,6 +371,14 @@ describe('WorkspacesService', () => {
       });
 
       await expect(service.delete('workspace-123', 'user-123')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ConflictException if workspace has other members', async () => {
+      workspacesRepo.findById.mockResolvedValue(mockWorkspace);
+      workspaceMembersRepo.countByWorkspaceId.mockResolvedValue(2);
+
+      await expect(service.delete('workspace-123', 'user-123')).rejects.toThrow(ConflictException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 
@@ -485,10 +510,17 @@ describe('WorkspacesService', () => {
       const targetMember = { ...mockMember, id: 'member-2', role: Role.MEMBER };
 
       workspaceMembersRepo.findById.mockResolvedValue(targetMember as any);
+      workspacesRepo.findById.mockResolvedValue(mockWorkspace);
+      usersService.getById.mockResolvedValue(mockUser as any);
 
       await service.removeMember('workspace-123', 'member-2', actingMember as any);
 
       expect(workspaceMembersRepo.delete).toHaveBeenCalledWith('member-2');
+      expect(mailService.sendRemovedFromWorkspace).toHaveBeenCalledWith({
+        to: mockUser.email,
+        firstName: mockUser.firstName,
+        workspaceName: mockWorkspace.name,
+      });
     });
 
     it('should throw ForbiddenException if trying to remove owner', async () => {

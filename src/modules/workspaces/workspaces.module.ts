@@ -3,6 +3,7 @@ import { WorkspaceMemberGuard, WorkspaceRoleGuard } from '@common/guards';
 import { AppConfigModule } from '@config/config.module';
 import { MailModule } from '@modules/mail';
 import { UsersModule } from '@modules/users';
+import { VehiclesModule } from '@modules/vehicles';
 import { forwardRef, Module } from '@nestjs/common';
 import { PrismaModule } from '@prisma/prisma.module';
 
@@ -15,7 +16,13 @@ import { WorkspacesRepo } from './workspaces.repository';
 import { WorkspacesService } from './workspaces.service';
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => UsersModule), MailModule, AppConfigModule],
+  imports: [
+    PrismaModule,
+    forwardRef(() => UsersModule),
+    MailModule,
+    AppConfigModule,
+    VehiclesModule,
+  ],
   controllers: [WorkspacesController, WorkspaceInvitesController],
   providers: [
     WorkspacesService,
