@@ -16,3 +16,8 @@ export {
 export { ARRAY_INDICES, PAGINATION_DEFAULTS, TIME_UNITS, TOKEN_EXPIRY } from './time.constants';
 
 export { WORKSPACE_ROLE_OPTIONS } from './workspace-role.constants';
+
+export {
+  DASHBOARD_EXPENSE_EXCLUDED_TYPES,
+  DASHBOARD_UPCOMING_REMINDERS_LIMIT,
+} from './dashboard.constants';

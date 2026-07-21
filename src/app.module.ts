@@ -3,6 +3,7 @@ import { CommonThrottlerModule } from '@common/throttler';
 import { AiModule } from '@modules/ai';
 import { AiConversationsModule } from '@modules/ai-conversations';
 import { AuthModule } from '@modules/auth';
+import { DashboardModule } from '@modules/dashboard';
 import { MailModule } from '@modules/mail';
 import { MaintenanceModule } from '@modules/maintenance';
 import { MediaModule } from '@modules/media';
@@ -51,6 +52,7 @@ import { PrismaModule } from './prisma';
     ServiceStationsModule,
     AiModule,
     AiConversationsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
