@@ -42,6 +42,14 @@ export class RemindersRepository {
     });
   }
 
+  async findActiveByVehicleIds(vehicleIds: string[]): Promise<Reminder[]> {
+    if (vehicleIds.length === 0) return [];
+
+    return this.prisma.reminder.findMany({
+      where: { vehicleId: { in: vehicleIds }, status: ReminderStatus.ACTIVE },
+    });
+  }
+
   async create(data: CreateReminderInput, tx?: Prisma.TransactionClient): Promise<Reminder> {
     const client = tx ?? this.prisma;
     return client.reminder.create({ data });

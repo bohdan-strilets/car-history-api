@@ -34,6 +34,11 @@ export class RemindersService {
     return reminder;
   }
 
+  async getActiveByVehicleIds(vehicleIds: string[]): Promise<ReminderResponseDto[]> {
+    const reminders = await this.remindersRepo.findActiveByVehicleIds(vehicleIds);
+    return reminders.map(toReminderResponse);
+  }
+
   // ─── Commands (manual) ────────────────────────────────────────────────────
 
   async create(
