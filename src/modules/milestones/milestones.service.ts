@@ -3,7 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { MilestonesRepository } from './milestones.repository';
-import { CheckContext, MilestoneCondition, MilestoneResult, VehicleContext } from './types';
+import {
+  CheckContext,
+  MilestoneCondition,
+  MilestoneResult,
+  VehicleContext,
+  VehicleLatestMilestoneInfo,
+} from './types';
 
 @Injectable()
 export class MilestonesService {
@@ -13,6 +19,30 @@ export class MilestonesService {
 
   async getVehicleMilestones(vehicleId: string) {
     return this.milestonesRepository.findByVehicle(vehicleId);
+  }
+
+  async getLatestByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, VehicleLatestMilestoneInfo | null>> {
+    const result = new Map<string, VehicleLatestMilestoneInfo | null>(
+      vehicleIds.map((id) => [id, null]),
+    );
+
+    const achievements = await this.milestonesRepository.findLatestByVehicleIds(vehicleIds);
+
+    const seen = new Set<string>();
+    for (const achievement of achievements) {
+      if (seen.has(achievement.vehicleId)) continue; // keep only the most recent per vehicle
+      seen.add(achievement.vehicleId);
+
+      result.set(achievement.vehicleId, {
+        code: achievement.milestoneDefinition.code,
+        title: achievement.milestoneDefinition.title,
+        category: achievement.milestoneDefinition.category,
+      });
+    }
+
+    return result;
   }
 
   // ─── Check & Award ─────────────────────────────────────────────────────────

@@ -22,6 +22,18 @@ export class MilestonesRepository {
     });
   }
 
+  async findLatestByVehicleIds(vehicleIds: string[]) {
+    if (vehicleIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.vehicleMilestone.findMany({
+      where: { vehicleId: { in: vehicleIds } },
+      include: { milestoneDefinition: true },
+      orderBy: { achievedAt: 'desc' },
+    });
+  }
+
   async findAchieved(vehicleId: string, definitionId: string) {
     return this.prisma.vehicleMilestone.findFirst({
       where: { vehicleId, milestoneDefinitionId: definitionId },

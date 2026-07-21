@@ -25,3 +25,9 @@ export type MilestoneResult = {
   achieved: boolean;
   value: number;
 };
+
+export type VehicleLatestMilestoneInfo = {
+  code: string;
+  title: string;
+  category: string;
+};

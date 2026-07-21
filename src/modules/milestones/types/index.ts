@@ -4,4 +4,5 @@ export type {
   MilestoneCondition,
   MilestoneResult,
   VehicleContext,
+  VehicleLatestMilestoneInfo,
 } from './milestones.type';
