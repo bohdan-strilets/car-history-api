@@ -37,6 +37,22 @@ export class TimelineService {
     return event;
   }
 
+  async getMonthlyExpensesByVehicleIds(vehicleIds: string[]): Promise<Map<string, number>> {
+    return this.timelineRepository.getMonthlyExpensesByVehicleIds(vehicleIds);
+  }
+
+  async getRecentFullTankRefuelsByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, Array<{ mileage: number; liters: number }>>> {
+    return this.timelineRepository.getRecentFullTankRefuelsByVehicleIds(vehicleIds);
+  }
+
+  async getLatestInsuranceExpireDatesByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, Date | null>> {
+    return this.timelineRepository.getLatestInsuranceExpireDatesByVehicleIds(vehicleIds);
+  }
+
   // ─── Commands ──────────────────────────────────────────────────────────────
 
   async createEvent(vehicleId: string, dto: CreateTimelineEventDto, userId: string) {

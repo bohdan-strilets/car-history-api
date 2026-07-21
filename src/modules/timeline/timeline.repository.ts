@@ -257,4 +257,100 @@ export class TimelineRepository {
     });
     return vehicle?.fuelType ?? [];
   }
+
+  async getMonthlyExpensesByVehicleIds(vehicleIds: string[]): Promise<Map<string, number>> {
+    const result = new Map<string, number>(vehicleIds.map((id) => [id, 0]));
+
+    if (vehicleIds.length === 0) {
+      return result;
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const grouped = await this.prisma.timelineEvent.groupBy({
+      by: ['vehicleId'],
+      where: {
+        vehicleId: { in: vehicleIds },
+        deletedAt: null,
+        eventDate: { gte: startOfMonth },
+      },
+      _sum: { cost: true },
+    });
+
+    for (const row of grouped) {
+      result.set(row.vehicleId, row._sum.cost ? Number(row._sum.cost) : 0);
+    }
+
+    return result;
+  }
+
+  async getLatestInsuranceExpireDatesByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, Date | null>> {
+    const result = new Map<string, Date | null>(vehicleIds.map((id) => [id, null]));
+
+    if (vehicleIds.length === 0) return result;
+
+    const documents = await this.prisma.document.findMany({
+      where: {
+        type: 'INSURANCE_OC',
+        event: { vehicleId: { in: vehicleIds }, deletedAt: null },
+      },
+      select: {
+        expireDate: true,
+        event: { select: { vehicleId: true } },
+      },
+      orderBy: { expireDate: 'desc' },
+    });
+
+    const seen = new Set<string>();
+
+    for (const doc of documents) {
+      const vehicleId = doc.event.vehicleId;
+      if (seen.has(vehicleId)) continue;
+      seen.add(vehicleId);
+      result.set(vehicleId, doc.expireDate);
+    }
+
+    return result;
+  }
+
+  async getRecentFullTankRefuelsByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, Array<{ mileage: number; liters: number }>>> {
+    const result = new Map<string, Array<{ mileage: number; liters: number }>>(
+      vehicleIds.map((id) => [id, []]),
+    );
+
+    if (vehicleIds.length === 0) {
+      return result;
+    }
+
+    const refuels = await this.prisma.refuel.findMany({
+      where: {
+        isFullTank: true,
+        event: { vehicleId: { in: vehicleIds }, deletedAt: null },
+      },
+      select: {
+        liters: true,
+        event: { select: { vehicleId: true, mileage: true, eventDate: true } },
+      },
+      orderBy: { event: { eventDate: 'desc' } },
+    });
+
+    for (const refuel of refuels) {
+      const vehicleId = refuel.event.vehicleId;
+      const list = result.get(vehicleId);
+      if (!list) continue;
+
+      // Only keep the 3 most recent full-tank refuels per vehicle — enough to
+      // compute one consumption delta, capped to avoid unbounded growth.
+      if (list.length >= 3) continue;
+
+      list.push({ mileage: refuel.event.mileage, liters: refuel.liters.toNumber() });
+    }
+
+    return result;
+  }
 }
