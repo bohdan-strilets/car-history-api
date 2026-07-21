@@ -122,6 +122,28 @@ export class MediaService {
     return items.map(mapMedia);
   }
 
+  async getPrimaryPhotoUrlsByVehicleIds(vehicleIds: string[]): Promise<Map<string, string | null>> {
+    const result = new Map<string, string | null>(vehicleIds.map((id) => [id, null]));
+
+    if (vehicleIds.length === 0) {
+      return result;
+    }
+
+    const mediaItems = await this.mediaRepository.findPrimaryPhotosByVehicleIds(vehicleIds);
+
+    for (const media of mediaItems) {
+      const usage = media.usages.find((u) => u.entityType === MediaEntity.VEHICLE && u.isPrimary);
+      if (!usage) continue;
+
+      const mediumVariant = media.variants.find((v) => v.type === 'MEDIUM');
+      const url = mediumVariant?.cloudinaryUrl ?? media.cloudinaryUrl;
+
+      result.set(usage.entityId, url);
+    }
+
+    return result;
+  }
+
   async setPrimary(userId: string, mediaId: string) {
     const media = await this.mediaRepository.findById(mediaId);
     if (!media) {

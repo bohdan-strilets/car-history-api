@@ -122,6 +122,25 @@ export class MediaRepository {
     });
   }
 
+  async findPrimaryPhotosByVehicleIds(vehicleIds: string[]): Promise<MappedMedia[]> {
+    if (vehicleIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.media.findMany({
+      where: {
+        usages: {
+          some: {
+            entityType: MediaEntity.VEHICLE,
+            entityId: { in: vehicleIds },
+            isPrimary: true,
+          },
+        },
+      },
+      include: mediaInclude,
+    });
+  }
+
   // ─── Commands ─────────────────────────────────────────────────────────────
 
   async create(input: CreateMediaInput): Promise<MappedMedia> {
