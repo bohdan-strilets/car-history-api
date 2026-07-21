@@ -39,6 +39,10 @@ export class RemindersService {
     return reminders.map(toReminderResponse);
   }
 
+  async getActiveCountByVehicleIds(vehicleIds: string[]): Promise<Map<string, number>> {
+    return this.remindersRepo.countActiveByVehicleIds(vehicleIds);
+  }
+
   // ─── Commands (manual) ────────────────────────────────────────────────────
 
   async create(

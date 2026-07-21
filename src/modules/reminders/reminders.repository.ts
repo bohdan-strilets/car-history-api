@@ -50,6 +50,26 @@ export class RemindersRepository {
     });
   }
 
+  async countActiveByVehicleIds(vehicleIds: string[]): Promise<Map<string, number>> {
+    const result = new Map<string, number>(vehicleIds.map((id) => [id, 0]));
+
+    if (vehicleIds.length === 0) {
+      return result;
+    }
+
+    const grouped = await this.prisma.reminder.groupBy({
+      by: ['vehicleId'],
+      where: { vehicleId: { in: vehicleIds }, status: ReminderStatus.ACTIVE },
+      _count: { id: true },
+    });
+
+    for (const row of grouped) {
+      result.set(row.vehicleId, row._count.id);
+    }
+
+    return result;
+  }
+
   async create(data: CreateReminderInput, tx?: Prisma.TransactionClient): Promise<Reminder> {
     const client = tx ?? this.prisma;
     return client.reminder.create({ data });
