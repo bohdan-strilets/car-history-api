@@ -26,6 +26,16 @@ export class TiresRepository {
     });
   }
 
+  async findMountedByVehicleIds(vehicleIds: string[]): Promise<Tire[]> {
+    if (vehicleIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.tire.findMany({
+      where: { vehicleId: { in: vehicleIds }, status: TireStatus.MOUNTED },
+    });
+  }
+
   async create(data: CreateTireInput): Promise<Tire> {
     return this.prisma.tire.create({
       data: {

@@ -1,7 +1,7 @@
 import { ErrorCodes, ForbiddenException, NotFoundException } from '@common/exceptions';
 import { assertCanDeleteOwnedResource } from '@common/utils';
 import { Injectable } from '@nestjs/common';
-import { Prisma, Role, Tire, TireChangeType, TireStatus } from '@prisma/client';
+import { Prisma, Role, Tire, TireChangeType, TireStatus, TireType } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 
 import { CreateTireDto, TireResponseDto, UpdateTireDto } from './dto';
@@ -27,6 +27,24 @@ export class TiresService {
     const tire = await this.tiresRepo.findById(id);
     if (!tire) throw new NotFoundException(ErrorCodes.Tire.NOT_FOUND);
     return tire;
+  }
+
+  async getMountedTireTypesByVehicleIds(
+    vehicleIds: string[],
+  ): Promise<Map<string, TireType | null>> {
+    const result = new Map<string, TireType | null>(vehicleIds.map((id) => [id, null]));
+
+    if (vehicleIds.length === 0) {
+      return result;
+    }
+
+    const mounted = await this.tiresRepo.findMountedByVehicleIds(vehicleIds);
+
+    for (const tire of mounted) {
+      result.set(tire.vehicleId, tire.type);
+    }
+
+    return result;
   }
 
   // ─── Commands ─────────────────────────────────────────────────────────────
