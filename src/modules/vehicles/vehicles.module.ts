@@ -1,6 +1,7 @@
 import { VehicleAccessGuard, WorkspaceMemberGuard } from '@common/guards';
 import { AiModule } from '@modules/ai';
 import { MaintenanceModule } from '@modules/maintenance';
+import { MediaModule } from '@modules/media';
 import { MilestonesModule } from '@modules/milestones';
 import { RemindersModule } from '@modules/reminders';
 import { TimelineModule } from '@modules/timeline';
@@ -21,6 +22,7 @@ import { VehiclesService } from './vehicles.service';
     MaintenanceModule,
     TiresModule,
     MilestonesModule,
+    MediaModule,
   ],
   controllers: [VehiclesController],
   providers: [VehiclesService, VehiclesRepo, WorkspaceMemberGuard, VehicleAccessGuard],

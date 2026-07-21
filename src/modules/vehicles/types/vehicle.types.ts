@@ -1,4 +1,13 @@
-import { BodyType, DriveType, FuelType, Transmission, Vehicle } from '@prisma/client';
+import { VehicleLatestMilestoneInfo } from '@modules/milestones/types';
+import {
+  BodyType,
+  DriveType,
+  FuelType,
+  MaintenanceType,
+  TireType,
+  Transmission,
+  Vehicle,
+} from '@prisma/client';
 
 export interface VehiclePurchaseInfo {
   date?: string;
@@ -115,4 +124,32 @@ export interface VehicleSpecsPromptParams {
   generation?: string | null;
   engineDisplacementCc: number;
   fuelType: string[];
+}
+
+export type InsuranceStatus = 'ACTIVE' | 'EXPIRING' | 'EXPIRED' | 'MISSING';
+
+export interface VehicleInsuranceInfo {
+  status: InsuranceStatus;
+  expireDate: string | null;
+}
+
+export interface VehicleNextMaintenanceInfo {
+  type: MaintenanceType;
+  dueDate: string | null;
+  dueMileage: number | null;
+}
+
+export interface VehicleNextMaintenanceInfo {
+  type: MaintenanceType;
+  dueDate: string | null;
+  dueMileage: number | null;
+}
+
+export type { TireType, VehicleLatestMilestoneInfo };
+
+export type FuelConsumptionSource = 'CALCULATED' | 'SPEC' | null;
+
+export interface VehicleFuelConsumptionInfo {
+  value: number | null;
+  source: FuelConsumptionSource;
 }

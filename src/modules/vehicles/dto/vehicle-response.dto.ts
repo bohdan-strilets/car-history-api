@@ -1,6 +1,22 @@
-import { BodyType, DriveType, FuelType, Transmission, VehicleStatus } from '@prisma/client';
+import {
+  BodyType,
+  DriveType,
+  FuelType,
+  TireType,
+  Transmission,
+  VehicleStatus,
+} from '@prisma/client';
 
-import { VehiclePurchaseInfo, VehicleSaleInfo, VehicleSpecs, VehicleUserInfo } from '../types';
+import {
+  VehicleFuelConsumptionInfo,
+  VehicleInsuranceInfo,
+  VehicleLatestMilestoneInfo,
+  VehicleNextMaintenanceInfo,
+  VehiclePurchaseInfo,
+  VehicleSaleInfo,
+  VehicleSpecs,
+  VehicleUserInfo,
+} from '../types';
 
 export class VehicleResponseDto {
   declare id: string;
@@ -27,5 +43,13 @@ export class VehicleResponseDto {
   declare purchaseInfo: VehiclePurchaseInfo | null;
   declare saleInfo: VehicleSaleInfo | null;
   declare specs: VehicleSpecs | null;
+  declare primaryPhotoUrl: string | null;
+  declare monthlyExpenses: number;
+  declare insurance: VehicleInsuranceInfo;
+  declare tireSeason: TireType | null;
+  declare activeRemindersCount: number;
+  declare nextMaintenance: VehicleNextMaintenanceInfo | null;
+  declare latestMilestone: VehicleLatestMilestoneInfo | null;
+  declare fuelConsumption: VehicleFuelConsumptionInfo;
   declare createdAt: Date;
 }

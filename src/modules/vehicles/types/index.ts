@@ -1,6 +1,13 @@
 export type {
   CreateVehicleInput,
+  FuelConsumptionSource,
+  InsuranceStatus,
+  TireType,
   UpdateVehicleInput,
+  VehicleFuelConsumptionInfo,
+  VehicleInsuranceInfo,
+  VehicleLatestMilestoneInfo,
+  VehicleNextMaintenanceInfo,
   VehiclePurchaseInfo,
   VehicleSaleInfo,
   VehicleSpecs,
