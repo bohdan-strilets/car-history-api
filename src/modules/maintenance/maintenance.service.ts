@@ -32,6 +32,20 @@ export class MaintenanceService {
     return interval;
   }
 
+  async getActiveByVehicleIds(vehicleIds: string[]): Promise<Map<string, MaintenanceInterval[]>> {
+    const result = new Map<string, MaintenanceInterval[]>(vehicleIds.map((id) => [id, []]));
+
+    const intervals = await this.maintenanceRepo.findActiveByVehicleIds(vehicleIds);
+
+    for (const interval of intervals) {
+      const existing = result.get(interval.vehicleId) ?? [];
+      existing.push(interval);
+      result.set(interval.vehicleId, existing);
+    }
+
+    return result;
+  }
+
   // ─── Commands ─────────────────────────────────────────────────────────────
 
   async create(

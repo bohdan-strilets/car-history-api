@@ -20,6 +20,16 @@ export class MaintenanceRepository {
     });
   }
 
+  async findActiveByVehicleIds(vehicleIds: string[]): Promise<MaintenanceInterval[]> {
+    if (vehicleIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.maintenanceInterval.findMany({
+      where: { vehicleId: { in: vehicleIds }, status: 'ACTIVE' },
+    });
+  }
+
   async create(
     data: CreateMaintenanceInput,
     tx?: Prisma.TransactionClient,
