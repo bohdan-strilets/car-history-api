@@ -187,6 +187,11 @@ export class AppConfigService {
       .filter(Boolean);
   }
 
+  get cookieDomain(): string | undefined {
+    const value = this.config.get('COOKIE_DOMAIN', { infer: true });
+    return value.length > 0 ? value : undefined;
+  }
+
   get enableAntivirusScan() {
     return this.config.get('ENABLE_ANTIVIRUS_SCAN', { infer: true });
   }

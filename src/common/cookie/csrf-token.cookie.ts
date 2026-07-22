@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import ms from 'ms';
 
 import { CSRF_TOKEN_COOKIE } from './constants.cookie';
+import { getCookieDomainOption, getCookieSameSite } from './cookie-options.util';
 
 export const createCsrfToken = (): string => randomBytes(32).toString('hex');
 
@@ -16,9 +17,10 @@ export const setCsrfTokenCookie = (
   res.cookie(CSRF_TOKEN_COOKIE, token, {
     httpOnly: false,
     secure: config.isProduction,
-    sameSite: config.isProduction ? 'none' : 'strict',
+    sameSite: getCookieSameSite(config),
     maxAge: ms(config.jwtRefreshExpiresIn),
     path: '/',
+    ...getCookieDomainOption(config),
   });
 };
 
@@ -26,8 +28,9 @@ export const clearCsrfTokenCookie = (res: Response, config: AppConfigService): v
   res.clearCookie(CSRF_TOKEN_COOKIE, {
     httpOnly: false,
     secure: config.isProduction,
-    sameSite: config.isProduction ? 'none' : 'strict',
+    sameSite: getCookieSameSite(config),
     path: '/',
+    ...getCookieDomainOption(config),
   });
 };
 

@@ -54,6 +54,8 @@ export const envSchema = z.object({
     .string()
     .default('Origin,Content-Type,Accept,Authorization,X-CSRF-Token,X-Request-Id,X-Correlation-Id'),
 
+  COOKIE_DOMAIN: z.string().optional().default(''),
+
   ENABLE_ANTIVIRUS_SCAN: z.coerce.boolean().default(false),
 
   CLOUDINARY_CLOUD_NAME: z.string(),
