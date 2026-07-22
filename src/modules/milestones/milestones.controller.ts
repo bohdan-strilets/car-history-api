@@ -15,4 +15,9 @@ export class MilestonesController {
   getVehicleMilestones(@Param('vehicleId') vehicleId: string) {
     return this.milestonesService.getVehicleMilestones(vehicleId);
   }
+
+  @Get('levels')
+  getVehicleMilestoneLevels(@Param('vehicleId') vehicleId: string) {
+    return this.milestonesService.getVehicleMilestoneLevels(vehicleId);
+  }
 }

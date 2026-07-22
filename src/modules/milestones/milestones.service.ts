@@ -5,7 +5,11 @@ import { Prisma } from '@prisma/client';
 import { MilestonesRepository } from './milestones.repository';
 import {
   CheckContext,
+  MILESTONE_LEVEL_GROUPS,
   MilestoneCondition,
+  MilestoneLevel,
+  MilestoneLevelGroup,
+  MilestoneLevelStep,
   MilestoneResult,
   VehicleContext,
   VehicleLatestMilestoneInfo,
@@ -19,6 +23,100 @@ export class MilestonesService {
 
   async getVehicleMilestones(vehicleId: string) {
     return this.milestonesRepository.findByVehicle(vehicleId);
+  }
+
+  async getVehicleMilestoneLevels(vehicleId: string): Promise<MilestoneLevel[]> {
+    const [definitions, achievements] = await Promise.all([
+      this.milestonesRepository.findDefinitions(),
+      this.milestonesRepository.findByVehicle(vehicleId),
+    ]);
+
+    const achievedDefinitionIds = new Set(achievements.map((a) => a.milestoneDefinitionId));
+
+    const groups: Array<{
+      group: MilestoneLevelGroup;
+      definitions: typeof definitions;
+      getCurrentValue: () => Promise<number>;
+    }> = [
+      {
+        group: MILESTONE_LEVEL_GROUPS.MILEAGE,
+        definitions: definitions.filter((d) => d.category === 'MILEAGE'),
+        getCurrentValue: async () => {
+          const mileageFromLogs = await this.milestonesRepository.getMileageFromLogs(vehicleId);
+          const vehicle = await this.milestonesRepository.getVehicle(vehicleId);
+          return mileageFromLogs - (vehicle?.registrationMileage ?? 0);
+        },
+      },
+      {
+        group: MILESTONE_LEVEL_GROUPS.EXPENSES,
+        definitions: definitions.filter((d) => d.category === 'EXPENSES'),
+        getCurrentValue: () => this.milestonesRepository.getTotalExpenses(vehicleId),
+      },
+      {
+        group: MILESTONE_LEVEL_GROUPS.REFUELS,
+        definitions: definitions.filter((d) => {
+          const condition = d.condition as MilestoneCondition;
+          return condition.type === 'EVENT_COUNT' && condition.eventType === 'REFUEL';
+        }),
+        getCurrentValue: () => this.milestonesRepository.getEventCount(vehicleId, 'REFUEL'),
+      },
+    ];
+
+    const levels = await Promise.all(
+      groups.map(async ({ group, definitions: groupDefinitions, getCurrentValue }) => {
+        const sorted = [...groupDefinitions].sort((a, b) => {
+          const conditionA = a.condition as MilestoneCondition;
+          const conditionB = b.condition as MilestoneCondition;
+          return (conditionA.value ?? 0) - (conditionB.value ?? 0);
+        });
+
+        const currentValue = await getCurrentValue();
+
+        let currentLevel: MilestoneLevelStep | null = null;
+        let nextLevel: MilestoneLevelStep | null = null;
+        let levelIndex = 0;
+
+        for (const [index, definition] of sorted.entries()) {
+          const isAchieved = achievedDefinitionIds.has(definition.id);
+          if (isAchieved) {
+            currentLevel = {
+              code: definition.code,
+              title: definition.title,
+              value: (definition.condition as MilestoneCondition).value ?? 0,
+            };
+            levelIndex = index + 1;
+          } else if (!nextLevel) {
+            nextLevel = {
+              code: definition.code,
+              title: definition.title,
+              value: (definition.condition as MilestoneCondition).value ?? 0,
+            };
+          }
+        }
+
+        const previousThreshold = currentLevel?.value ?? 0;
+        const progressPercent = nextLevel
+          ? Math.min(
+              Math.round(
+                ((currentValue - previousThreshold) / (nextLevel.value - previousThreshold)) * 100,
+              ),
+              100,
+            )
+          : 100;
+
+        return {
+          group,
+          currentLevel,
+          levelIndex,
+          totalLevels: sorted.length,
+          nextLevel,
+          currentValue,
+          progressPercent: Math.max(progressPercent, 0),
+        };
+      }),
+    );
+
+    return levels;
   }
 
   async getLatestByVehicleIds(
