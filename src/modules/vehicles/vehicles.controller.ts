@@ -37,7 +37,7 @@ export class VehiclesController {
   @Get(':vehicleId')
   @UseGuards(VehicleAccessGuard)
   async getOne(@Param('vehicleId') vehicleId: string) {
-    return this.vehiclesService.getById(vehicleId);
+    return this.vehiclesService.getByIdWithSummary(vehicleId);
   }
 
   @Post()

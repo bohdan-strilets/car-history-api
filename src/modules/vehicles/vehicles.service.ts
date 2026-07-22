@@ -55,47 +55,13 @@ export class VehiclesService {
 
   async getAllByWorkspaceId(workspaceId: string): Promise<VehicleResponseDto[]> {
     const vehicles = await this.vehiclesRepo.findAllByWorkspaceId(workspaceId);
-    const vehicleIds = vehicles.map((v) => v.id);
+    return this.buildVehicleResponses(vehicles);
+  }
 
-    const [
-      photoUrlsByVehicleId,
-      monthlyExpensesByVehicleId,
-      insuranceExpireDatesByVehicleId,
-      tireSeasonByVehicleId,
-      activeRemindersCountByVehicleId,
-      maintenanceByVehicleId,
-      latestMilestoneByVehicleId,
-      recentRefuelsByVehicleId,
-    ] = await Promise.all([
-      this.mediaService.getPrimaryPhotoUrlsByVehicleIds(vehicleIds),
-      this.timelineService.getMonthlyExpensesByVehicleIds(vehicleIds),
-      this.timelineService.getLatestInsuranceExpireDatesByVehicleIds(vehicleIds),
-      this.tiresService.getMountedTireTypesByVehicleIds(vehicleIds),
-      this.remindersService.getActiveCountByVehicleIds(vehicleIds),
-      this.maintenanceService.getActiveByVehicleIds(vehicleIds),
-      this.milestonesService.getLatestByVehicleIds(vehicleIds),
-      this.timelineService.getRecentFullTankRefuelsByVehicleIds(vehicleIds),
-    ]);
-
-    return vehicles.map((vehicle) =>
-      toVehicleResponse(
-        vehicle,
-        photoUrlsByVehicleId.get(vehicle.id) ?? null,
-        monthlyExpensesByVehicleId.get(vehicle.id) ?? 0,
-        this.buildInsuranceInfo(insuranceExpireDatesByVehicleId.get(vehicle.id) ?? null),
-        tireSeasonByVehicleId.get(vehicle.id) ?? null,
-        activeRemindersCountByVehicleId.get(vehicle.id) ?? 0,
-        this.pickNearestMaintenance(
-          maintenanceByVehicleId.get(vehicle.id) ?? [],
-          vehicle.currentMileage,
-        ),
-        latestMilestoneByVehicleId.get(vehicle.id) ?? null,
-        this.calculateFuelConsumption(
-          recentRefuelsByVehicleId.get(vehicle.id) ?? [],
-          (vehicle.specs as VehicleSpecs | null)?.combinedConsumption,
-        ),
-      ),
-    );
+  async getByIdWithSummary(vehicleId: string): Promise<VehicleResponseDto> {
+    const vehicle = await this.getById(vehicleId);
+    const [response] = await this.buildVehicleResponses([vehicle]);
+    return response;
   }
 
   // ─── Commands ─────────────────────────────────────────────────────────────
@@ -278,5 +244,49 @@ export class VehiclesService {
     }
 
     return { value: null, source: null };
+  }
+
+  private async buildVehicleResponses(vehicles: VehicleWithOwner[]): Promise<VehicleResponseDto[]> {
+    const vehicleIds = vehicles.map((v) => v.id);
+
+    const [
+      photoUrlsByVehicleId,
+      monthlyExpensesByVehicleId,
+      insuranceExpireDatesByVehicleId,
+      tireSeasonByVehicleId,
+      activeRemindersCountByVehicleId,
+      maintenanceByVehicleId,
+      latestMilestoneByVehicleId,
+      recentRefuelsByVehicleId,
+    ] = await Promise.all([
+      this.mediaService.getPrimaryPhotoUrlsByVehicleIds(vehicleIds),
+      this.timelineService.getMonthlyExpensesByVehicleIds(vehicleIds),
+      this.timelineService.getLatestInsuranceExpireDatesByVehicleIds(vehicleIds),
+      this.tiresService.getMountedTireTypesByVehicleIds(vehicleIds),
+      this.remindersService.getActiveCountByVehicleIds(vehicleIds),
+      this.maintenanceService.getActiveByVehicleIds(vehicleIds),
+      this.milestonesService.getLatestByVehicleIds(vehicleIds),
+      this.timelineService.getRecentFullTankRefuelsByVehicleIds(vehicleIds),
+    ]);
+
+    return vehicles.map((vehicle) =>
+      toVehicleResponse(
+        vehicle,
+        photoUrlsByVehicleId.get(vehicle.id) ?? null,
+        monthlyExpensesByVehicleId.get(vehicle.id) ?? 0,
+        this.buildInsuranceInfo(insuranceExpireDatesByVehicleId.get(vehicle.id) ?? null),
+        tireSeasonByVehicleId.get(vehicle.id) ?? null,
+        activeRemindersCountByVehicleId.get(vehicle.id) ?? 0,
+        this.pickNearestMaintenance(
+          maintenanceByVehicleId.get(vehicle.id) ?? [],
+          vehicle.currentMileage,
+        ),
+        latestMilestoneByVehicleId.get(vehicle.id) ?? null,
+        this.calculateFuelConsumption(
+          recentRefuelsByVehicleId.get(vehicle.id) ?? [],
+          (vehicle.specs as VehicleSpecs | null)?.combinedConsumption,
+        ),
+      ),
+    );
   }
 }
