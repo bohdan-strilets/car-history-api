@@ -50,6 +50,34 @@ export class RemindersRepository {
     });
   }
 
+  async findMaintenanceIntervalsByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return new Map();
+    }
+
+    const intervals = await this.prisma.maintenanceInterval.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        lastServiceMileage: true,
+        lastServiceDate: true,
+        intervalKm: true,
+        intervalMonths: true,
+      },
+    });
+
+    return new Map(intervals.map((interval) => [interval.id, interval]));
+  }
+
+  async getVehicleCurrentMileage(vehicleId: string): Promise<number> {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: { currentMileage: true },
+    });
+
+    return vehicle?.currentMileage ?? 0;
+  }
+
   async countActiveByVehicleIds(vehicleIds: string[]): Promise<Map<string, number>> {
     const result = new Map<string, number>(vehicleIds.map((id) => [id, 0]));
 

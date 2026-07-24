@@ -12,6 +12,7 @@ export class ReminderResponseDto {
   declare dueMileage: number | null;
   declare status: ReminderStatus;
   declare completedAt: string | null;
+  declare maintenanceProgress: number | null;
   declare createdAt: string;
   declare updatedAt: string;
 }

@@ -25,7 +25,7 @@ export class RemindersService {
 
   async getAllByVehicleId(vehicleId: string): Promise<ReminderResponseDto[]> {
     const reminders = await this.remindersRepo.findAllByVehicleId(vehicleId);
-    return reminders.map(toReminderResponse);
+    return this.attachMaintenanceProgress(vehicleId, reminders);
   }
 
   async getById(id: string): Promise<Reminder> {
@@ -256,5 +256,67 @@ export class RemindersService {
       CUSTOM: ReminderType.CUSTOM,
     };
     return map[maintenanceType] ?? ReminderType.CUSTOM;
+  }
+
+  private async attachMaintenanceProgress(
+    vehicleId: string,
+    reminders: Reminder[],
+  ): Promise<ReminderResponseDto[]> {
+    const intervalIds = [
+      ...new Set(
+        reminders.map((r) => r.maintenanceIntervalId).filter((id): id is string => id !== null),
+      ),
+    ];
+
+    if (intervalIds.length === 0) {
+      return reminders.map((reminder) => toReminderResponse(reminder));
+    }
+
+    const [intervalsById, currentMileage] = await Promise.all([
+      this.remindersRepo.findMaintenanceIntervalsByIds(intervalIds),
+      this.remindersRepo.getVehicleCurrentMileage(vehicleId),
+    ]);
+
+    return reminders.map((reminder) => {
+      const interval = reminder.maintenanceIntervalId
+        ? intervalsById.get(reminder.maintenanceIntervalId)
+        : undefined;
+
+      const progress = interval
+        ? this.calculateMaintenanceProgress(interval, currentMileage)
+        : null;
+
+      return toReminderResponse(reminder, progress);
+    });
+  }
+
+  private calculateMaintenanceProgress(
+    interval: {
+      lastServiceMileage: number | null;
+      lastServiceDate: Date | null;
+      intervalKm: number | null;
+      intervalMonths: number | null;
+    },
+    currentMileage: number,
+  ): number | null {
+    const percentages: number[] = [];
+
+    if (interval.intervalKm != null && interval.lastServiceMileage != null) {
+      percentages.push(
+        ((currentMileage - interval.lastServiceMileage) / interval.intervalKm) * 100,
+      );
+    }
+
+    if (interval.intervalMonths != null && interval.lastServiceDate != null) {
+      const totalDays = interval.intervalMonths * 30;
+      const daysPassed = (Date.now() - interval.lastServiceDate.getTime()) / (1000 * 60 * 60 * 24);
+      percentages.push((daysPassed / totalDays) * 100);
+    }
+
+    if (percentages.length === 0) {
+      return null;
+    }
+
+    return Math.min(Math.max(Math.round(Math.max(...percentages)), 0), 100);
   }
 }
